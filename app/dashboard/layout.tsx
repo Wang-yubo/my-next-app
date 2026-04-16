@@ -9,6 +9,7 @@ import {
   Dropdown,
   Space,
   Breadcrumb,
+  ConfigProvider,
 } from 'antd';
 import {
   UserOutlined,
@@ -24,6 +25,7 @@ import {
 import type { MenuProps } from 'antd';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import ThemeSwitcher from './theme-switcher';
 
 const { Header, Sider, Content, Footer } = Layout;
 
@@ -33,11 +35,17 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
+  const [primaryColor, setPrimaryColor] = useState<string>('#1677ff');
   const {
-    token: { colorBgContainer, borderRadiusLG },
+    token: { colorBgContainer, borderRadiusLG, colorText, colorBorderSecondary, colorTextSecondary },
   } = theme.useToken();
 
   const pathname = usePathname();
+
+  // 处理主题色变化
+  const handleThemeChange = (color: string) => {
+    setPrimaryColor(color);
+  };
 
   // 菜单配置
   const menuItems: MenuProps['items'] = [
@@ -89,7 +97,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   ];
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <ConfigProvider
+      theme={{
+        token: {
+          colorPrimary: primaryColor,
+        },
+      }}
+    >
+      <Layout style={{ minHeight: '100vh', background: '#f0f2f5' }}>
       {/* 侧边栏 */}
       <Sider
         collapsible
@@ -108,18 +123,18 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             alignItems: 'center',
             justifyContent: collapsed ? 'center' : 'flex-start',
             padding: collapsed ? 0 : '0 24px',
-            borderBottom: '1px solid #f0f0f0',
+            borderBottom: `1px solid ${colorBorderSecondary}`,
           }}
         >
           {collapsed ? (
-            <DashboardOutlined style={{ fontSize: 24, color: '#1677ff' }} />
+            <DashboardOutlined style={{ fontSize: 24, color: primaryColor }} />
           ) : (
             <h1
               style={{
                 margin: 0,
                 fontSize: 18,
                 fontWeight: 600,
-                color: '#1677ff',
+                color: primaryColor,
               }}
             >
               管理系统
@@ -149,13 +164,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            borderBottom: '1px solid #f0f0f0',
+            borderBottom: `1px solid ${colorBorderSecondary}`,
           }}
         >
           {/* 左侧：折叠按钮 + 面包屑 */}
           <Space size="middle">
             {React.createElement(collapsed ? MenuUnfoldOutlined : MenuFoldOutlined, {
-              style: { fontSize: 18, cursor: 'pointer' },
+              style: { fontSize: 18, cursor: 'pointer', color: colorText },
               onClick: () => setCollapsed(!collapsed),
             })}
             <Breadcrumb
@@ -166,16 +181,21 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             />
           </Space>
 
-          {/* 右侧：用户信息 */}
-          <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
-            <Space style={{ cursor: 'pointer' }}>
-              <Avatar
-                style={{ backgroundColor: '#1677ff' }}
-                icon={<UserOutlined />}
-              />
-              <span>管理员</span>
-            </Space>
-          </Dropdown>
+          {/* 右侧：主题切换 + 用户信息 */}
+          <Space size="middle">
+            <ThemeSwitcher 
+              onThemeChange={handleThemeChange}
+            />
+            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
+              <Space style={{ cursor: 'pointer', color: colorText }}>
+                <Avatar
+                  style={{ backgroundColor: primaryColor }}
+                  icon={<UserOutlined />}
+                />
+                <span>管理员</span>
+              </Space>
+            </Dropdown>
+          </Space>
         </Header>
 
         {/* 内容区域 */}
@@ -186,6 +206,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             minHeight: 280,
             background: colorBgContainer,
             borderRadius: borderRadiusLG,
+            color: colorText,
           }}
         >
           {children}
@@ -195,12 +216,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <Footer
           style={{
             textAlign: 'center',
-            color: '#666',
+            color: colorTextSecondary,
           }}
         >
           学生信息管理系统 ©{new Date().getFullYear()} Created with Ant Design
         </Footer>
       </Layout>
     </Layout>
+    </ConfigProvider>
   );
 }

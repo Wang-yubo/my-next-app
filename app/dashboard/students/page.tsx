@@ -13,6 +13,7 @@ import {
   Select,
   message,
   Popconfirm,
+  theme,
 } from 'antd';
 import {
   PlusOutlined,
@@ -71,6 +72,10 @@ export default function StudentsPage() {
     total: 0,
   });
   const [form] = Form.useForm<StudentFormData>();
+  
+  const {
+    token: { colorText, colorTextSecondary },
+  } = theme.useToken();
 
   // 获取学生列表
   const {
@@ -443,7 +448,7 @@ export default function StudentsPage() {
           alignItems: 'center',
         }}
       >
-        <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600 }}>
+        <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600, color: colorText }}>
           学生信息管理
         </h1>
         <Button
