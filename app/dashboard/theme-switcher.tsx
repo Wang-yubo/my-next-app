@@ -12,16 +12,18 @@ interface ThemeSwitcherProps {
 }
 
 export default function ThemeSwitcher({ onThemeChange }: ThemeSwitcherProps) {
-  const [customColor, setCustomColor] = useState<string>('#1677ff');
+  const [customColor, setCustomColor] = useState<string>(() => {
+    // 在初始化时就尝试从 localStorage 读取，避免首次渲染闪烁
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('theme-color') || '#1677ff';
+    }
+    return '#1677ff';
+  });
   const [open, setOpen] = useState(false);
 
-  // 从 localStorage 加载保存的主题色
   useEffect(() => {
-    const savedColor = localStorage.getItem('theme-color');
-    if (savedColor) {
-      setCustomColor(savedColor);
-      onThemeChange?.(savedColor);
-    }
+    // 确保颜色变化时同步给父组件
+    onThemeChange?.(customColor);
   }, []);
 
   // 处理颜色变化

@@ -47,22 +47,25 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     setPrimaryColor(color);
   };
 
-  // 菜单配置
+  // 菜单配置 - 统一管理路由和标题
   const menuItems: MenuProps['items'] = [
     {
       key: '/dashboard',
       icon: <DashboardOutlined />,
-      label: <Link href="/dashboard">仪表盘</Link>,
+      label: '仪表盘',
+      href: '/dashboard',
     },
     {
       key: '/dashboard/students',
       icon: <TeamOutlined />,
-      label: <Link href="/dashboard/students">学生管理</Link>,
+      label: '学生管理',
+      href: '/dashboard/students',
     },
     {
       key: '/dashboard/courses',
       icon: <BookOutlined />,
-      label: <Link href="/dashboard/courses">课程管理</Link>,
+      label: '课程管理',
+      href: '/dashboard/courses',
     },
     {
       type: 'divider',
@@ -70,9 +73,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     {
       key: '/api-doc',
       icon: <ApiOutlined />,
-      label: <Link href="/api-doc" target="_blank">API 文档</Link>,
+      label: 'API 文档',
+      href: '/api-doc',
+      target: '_blank',
     },
   ];
+
+  // 根据当前路径获取面包屑标题
+  const getBreadcrumbTitle = () => {
+    const currentItem = menuItems.find(item => item.key === pathname);
+    return currentItem?.label || '未知';
+  };
 
   // 用户下拉菜单
   const userMenuItems: MenuProps['items'] = [
@@ -97,7 +108,23 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   ];
 
   return (
-    <ConfigProvider
+    <>
+      {/* 同步脚本：在 React 启动前从 localStorage 读取颜色并设置到 CSS 变量 */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+            (function() {
+              try {
+                var color = localStorage.getItem('theme-color');
+                if (color) {
+                  document.documentElement.style.setProperty('--theme-primary-color', color);
+                }
+              } catch (e) {}
+            })();
+          `,
+        }}
+      />
+      <ConfigProvider
       theme={{
         token: {
           colorPrimary: primaryColor,
@@ -146,7 +173,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <Menu
           mode="inline"
           selectedKeys={[pathname]}
-          items={menuItems}
+          items={menuItems.map(item => 
+            item.type === 'divider' ? item : {
+              ...item,
+              label: <Link href={item.href!} target={item.target}>{item.label}</Link>
+            }
+          )}
           style={{
             borderRight: 0,
             marginTop: 8,
@@ -176,7 +208,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <Breadcrumb
               items={[
                 { title: '首页' },
-                { title: pathname === '/dashboard' ? '仪表盘' : '学生管理' },
+                { title: getBreadcrumbTitle() },
               ]}
             />
           </Space>
@@ -224,5 +256,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       </Layout>
     </Layout>
     </ConfigProvider>
+    </>
   );
 }
