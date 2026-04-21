@@ -125,12 +125,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         }}
       />
       <ConfigProvider
-      theme={{
-        token: {
-          colorPrimary: primaryColor,
-        },
-      }}
-    >
+        theme={{
+          token: {
+            colorPrimary: primaryColor,
+          },
+        }}
+      >
       <Layout style={{ minHeight: '100vh', background: '#f0f2f5' }}>
       {/* 侧边栏 */}
       <Sider
