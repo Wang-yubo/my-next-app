@@ -7,13 +7,8 @@ import {
   Space,
   Input,
   Tag,
-  Modal,
-  Form,
-  DatePicker,
-  Select,
-  message,
-  Popconfirm,
   theme,
+  Popconfirm,
 } from 'antd';
 import {
   PlusOutlined,
@@ -25,6 +20,8 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import { useRequest } from 'ahooks';
 import dayjs from 'dayjs';
+import { useStudentDetailModal } from './hooks/useStudentDetailModal';
+import { useStudentFormModal } from './hooks/useStudentFormModal';
 
 const { Search } = Input;
 
@@ -43,18 +40,6 @@ interface Student {
   key: string;
 }
 
-interface StudentFormData {
-  name: string;
-  gender: string;
-  age: number;
-  major: string;
-  grade: string;
-  phone: string;
-  email: string;
-  status: '在读' | '休学' | '毕业';
-  enrollDate: dayjs.Dayjs | null;
-}
-
 // 状态标签颜色映射
 const statusColorMap: Record<string, string> = {
   在读: 'blue',
@@ -64,17 +49,14 @@ const statusColorMap: Record<string, string> = {
 
 export default function StudentsPage() {
   const [searchText, setSearchText] = useState('');
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
     total: 0,
   });
-  const [form] = Form.useForm<StudentFormData>();
-  
+
   const {
-    token: { colorText, colorTextSecondary },
+    token: { colorText },
   } = theme.useToken();
 
   // 获取学生列表
@@ -122,80 +104,6 @@ export default function StudentsPage() {
     }
   );
 
-  // 创建学生
-  const { run: createStudent, loading: createLoading } = useRequest(
-    async (data: StudentFormData) => {
-      const response = await fetch('/api/students', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...data,
-          age: parseInt(String(data.age)),
-          enrollDate: data.enrollDate?.toISOString() || new Date().toISOString(),
-        }),
-      });
-      const result = await response.json();
-      if (!result.success) {
-        throw new Error(result.message || '创建失败');
-      }
-      return result;
-    },
-    {
-      manual: true,
-      onSuccess: () => {
-        message.success('添加成功');
-        setIsModalVisible(false);
-        form.resetFields();
-        setEditingStudent(null);
-        fetchStudents({
-          page: pagination.current,
-          pageSize: pagination.pageSize,
-          search: searchText,
-        });
-      },
-      onError: (error) => {
-        message.error(error.message || '创建失败');
-      },
-    }
-  );
-
-  // 更新学生
-  const { run: updateStudent, loading: updateLoading } = useRequest(
-    async ({ id, data }: { id: string; data: StudentFormData }) => {
-      const response = await fetch(`/api/students/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...data,
-          age: parseInt(String(data.age)),
-          enrollDate: data.enrollDate?.toISOString() || new Date().toISOString(),
-        }),
-      });
-      const result = await response.json();
-      if (!result.success) {
-        throw new Error(result.message || '更新失败');
-      }
-      return result;
-    },
-    {
-      manual: true,
-      onSuccess: () => {
-        message.success('编辑成功');
-        setIsModalVisible(false);
-        form.resetFields();
-        setEditingStudent(null);
-        fetchStudents({
-          page: pagination.current,
-          pageSize: pagination.pageSize,
-          search: searchText,
-        });
-      },
-      onError: (error) => {
-        message.error(error.message || '更新失败');
-      },
-    }
-  );
-
   // 删除学生
   const { run: deleteStudent, loading: deleteLoading } = useRequest(
     async (id: string) => {
@@ -211,18 +119,24 @@ export default function StudentsPage() {
     {
       manual: true,
       onSuccess: () => {
-        message.success('删除成功');
         fetchStudents({
           page: pagination.current,
           pageSize: pagination.pageSize,
           search: searchText,
         });
       },
-      onError: (error) => {
-        message.error(error.message || '删除失败');
-      },
     }
   );
+
+  // 使用自定义 Hook - 详情弹窗
+  const { handleView, DetailModal } = useStudentDetailModal();
+
+  // 使用自定义 Hook - 表单弹窗
+  const {
+    handleAdd,
+    handleEdit,
+    FormModal,
+  } = useStudentFormModal(pagination, searchText, fetchStudents);
 
   // 搜索处理
   const handleSearch = (value: string) => {
@@ -237,92 +151,6 @@ export default function StudentsPage() {
       pageSize: newPagination.pageSize,
       search: searchText,
     });
-  };
-
-  // 打开新增弹窗
-  const handleAdd = () => {
-    setEditingStudent(null);
-    form.resetFields();
-    setIsModalVisible(true);
-  };
-
-  // 打开编辑弹窗
-  const handleEdit = (record: Student) => {
-    setEditingStudent(record);
-    form.setFieldsValue({
-      name: record.name,
-      gender: record.gender,
-      age: record.age,
-      major: record.major,
-      grade: record.grade,
-      phone: record.phone,
-      email: record.email,
-      status: record.status,
-      enrollDate: record.enrollDate ? dayjs(record.enrollDate) : null,
-    });
-    setIsModalVisible(true);
-  };
-
-  // 查看学生详情
-  const handleView = (record: Student) => {
-    Modal.info({
-      title: '学生详情',
-      width: 600,
-      content: (
-        <div style={{ marginTop: 16, lineHeight: 2 }}>
-          <p>
-            <strong>学号：</strong>
-            {record.id}
-          </p>
-          <p>
-            <strong>姓名：</strong>
-            {record.name}
-          </p>
-          <p>
-            <strong>性别：</strong>
-            {record.gender}
-          </p>
-          <p>
-            <strong>年龄：</strong>
-            {record.age}
-          </p>
-          <p>
-            <strong>专业：</strong>
-            {record.major}
-          </p>
-          <p>
-            <strong>年级：</strong>
-            {record.grade}
-          </p>
-          <p>
-            <strong>联系电话：</strong>
-            {record.phone}
-          </p>
-          <p>
-            <strong>邮箱：</strong>
-            {record.email}
-          </p>
-          <p>
-            <strong>状态：</strong>
-            <Tag color={statusColorMap[record.status]}>{record.status}</Tag>
-          </p>
-          <p>
-            <strong>入学日期：</strong>
-            {record.enrollDate}
-          </p>
-        </div>
-      ),
-      okText: '关闭',
-    });
-  };
-
-  // 表单提交
-  const handleSubmit = async (values: StudentFormData) => {
-    if (editingStudent) {
-      updateStudent({ id: editingStudent.id, data: values });
-    } else {
-      createStudent(values);
-    }
   };
 
   // 表格列定义
@@ -374,7 +202,7 @@ export default function StudentsPage() {
       title: '邮箱',
       dataIndex: 'email',
       key: 'email',
-      width: 200,
+      width: 220,
     },
     {
       title: '状态',
@@ -389,12 +217,13 @@ export default function StudentsPage() {
       title: '入学日期',
       dataIndex: 'enrollDate',
       key: 'enrollDate',
-      width: 120,
+      width: 180,
+      render: (date: string) => dayjs(date).format('YYYY-MM-DD'),
     },
     {
       title: '操作',
       key: 'action',
-      width: 200,
+      width: 240,
       fixed: 'right',
       render: (_, record) => (
         <Space size="small">
@@ -489,136 +318,11 @@ export default function StudentsPage() {
         onChange={handleTableChange}
       />
 
-      {/* 新增/编辑弹窗 */}
-      <Modal
-        title={editingStudent ? '编辑学生' : '新增学生'}
-        open={isModalVisible}
-        onCancel={() => {
-          setIsModalVisible(false);
-          form.resetFields();
-          setEditingStudent(null);
-        }}
-        footer={null}
-        width={600}
-        destroyOnClose
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSubmit}
-          style={{ marginTop: 24 }}
-          autoComplete="off"
-        >
-          <Form.Item
-            label="姓名"
-            name="name"
-            rules={[{ required: true, message: '请输入姓名' }]}
-          >
-            <Input placeholder="请输入姓名" />
-          </Form.Item>
+      {/* 详情弹窗 */}
+      <DetailModal />
 
-          <Form.Item
-            label="性别"
-            name="gender"
-            rules={[{ required: true, message: '请选择性别' }]}
-          >
-            <Select placeholder="请选择性别">
-              <Select.Option value="男">男</Select.Option>
-              <Select.Option value="女">女</Select.Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            label="年龄"
-            name="age"
-            rules={[
-              { required: true, message: '请输入年龄' },
-            ]}
-          >
-            <Input type="number" placeholder="请输入年龄" min={1} max={100} />
-          </Form.Item>
-
-          <Form.Item
-            label="专业"
-            name="major"
-            rules={[{ required: true, message: '请输入专业' }]}
-          >
-            <Input placeholder="请输入专业" />
-          </Form.Item>
-
-          <Form.Item
-            label="年级"
-            name="grade"
-            rules={[{ required: true, message: '请输入年级' }]}
-          >
-            <Input placeholder="如：2024级" />
-          </Form.Item>
-
-          <Form.Item
-            label="联系电话"
-            name="phone"
-            rules={[
-              { required: true, message: '请输入联系电话' },
-              { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码' },
-            ]}
-          >
-            <Input placeholder="请输入联系电话" />
-          </Form.Item>
-
-          <Form.Item
-            label="邮箱"
-            name="email"
-            rules={[
-              { required: true, message: '请输入邮箱' },
-              { type: 'email', message: '请输入有效的邮箱地址' },
-            ]}
-          >
-            <Input placeholder="请输入邮箱" />
-          </Form.Item>
-
-          <Form.Item
-            label="状态"
-            name="status"
-            initialValue="在读"
-            rules={[{ required: true, message: '请选择状态' }]}
-          >
-            <Select>
-              <Select.Option value="在读">在读</Select.Option>
-              <Select.Option value="休学">休学</Select.Option>
-              <Select.Option value="毕业">毕业</Select.Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            label="入学日期"
-            name="enrollDate"
-            rules={[{ required: true, message: '请选择入学日期' }]}
-          >
-            <DatePicker style={{ width: '100%' }} />
-          </Form.Item>
-
-          <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
-            <Space>
-              <Button
-                onClick={() => {
-                  setIsModalVisible(false);
-                  form.resetFields();
-                  setEditingStudent(null);
-                }}
-              >
-                取消
-              </Button>
-              <Button
-                type="primary"
-                htmlType="submit"
-                loading={createLoading || updateLoading}
-              >
-                {editingStudent ? '保存' : '添加'}
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Modal>
+      {/* 表单弹窗 */}
+      <FormModal />
     </div>
   );
 }
