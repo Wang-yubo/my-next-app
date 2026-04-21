@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Layout,
   Menu,
@@ -26,6 +26,7 @@ import type { MenuProps } from 'antd';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import ThemeSwitcher from './theme-switcher';
+import LoadingSkeleton from './loading';
 
 const { Header, Sider, Content, Footer } = Layout;
 
@@ -35,12 +36,22 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
-  const [primaryColor, setPrimaryColor] = useState<string>('#1677ff');
+  const [primaryColor, setPrimaryColor] = useState('#1677ff');
+  const [isClient, setIsClient] = useState(false);
   const {
     token: { colorBgContainer, borderRadiusLG, colorText, colorBorderSecondary, colorTextSecondary },
   } = theme.useToken();
 
   const pathname = usePathname();
+
+  // 客户端水合后立即读取主题色
+  useEffect(() => {
+    setIsClient(true);
+    const savedColor = localStorage.getItem('theme-color');
+    if (savedColor) {
+      setPrimaryColor(savedColor);
+    }
+  }, []);
 
   // 处理主题色变化
   const handleThemeChange = (color: string) => {
@@ -107,30 +118,19 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     },
   ];
 
+  // 在主题色加载完成前显示骨架屏，避免闪烁
+  if (!isClient) {
+    return <LoadingSkeleton />;
+  }
+
   return (
-    <>
-      {/* 同步脚本：在 React 启动前从 localStorage 读取颜色并设置到 CSS 变量 */}
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
-            (function() {
-              try {
-                var color = localStorage.getItem('theme-color');
-                if (color) {
-                  document.documentElement.style.setProperty('--theme-primary-color', color);
-                }
-              } catch (e) {}
-            })();
-          `,
-        }}
-      />
-      <ConfigProvider
-        theme={{
-          token: {
-            colorPrimary: primaryColor,
-          },
-        }}
-      >
+    <ConfigProvider
+      theme={{
+        token: {
+          colorPrimary: primaryColor,
+        },
+      }}
+    >
       <Layout style={{ minHeight: '100vh', background: '#f0f2f5' }}>
       {/* 侧边栏 */}
       <Sider
@@ -256,6 +256,5 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       </Layout>
     </Layout>
     </ConfigProvider>
-    </>
   );
 }

@@ -21,11 +21,6 @@ export default function ThemeSwitcher({ onThemeChange }: ThemeSwitcherProps) {
   });
   const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    // 确保颜色变化时同步给父组件
-    onThemeChange?.(customColor);
-  }, []);
-
   // 处理颜色变化
   const handleColorChange = (color: Color) => {
     const hexColor = color.toHexString();
