@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { Modal, Form, Select, Button, Space, message, Descriptions, Tag, Spin } from 'antd';
+import React, {useEffect} from 'react';
+import { Modal, Form, Select, Button, Space, message, Descriptions, Tag, Spin, Card } from 'antd';
 import { useRequest } from 'ahooks';
 
 interface Enrollment {
@@ -81,6 +81,10 @@ export function useEnrollmentFormModal(
   const [availableStudents, setAvailableStudents] = React.useState<Student[]>([]);
   const [loadingData, setLoadingData] = React.useState(false);
 
+  useEffect(()=>{
+    console.log("formModalVisible:",formModalVisible)
+  },[formModalVisible])
+
   // 获取可选课程列表（状态为开设中且未满员）
   const { run: fetchAvailableCourses } = useRequest(
     async () => {
@@ -94,7 +98,7 @@ export function useEnrollmentFormModal(
     {
       manual: true,
       onSuccess: (result) => {
-        const filtered = result.data.filter((course: Course) => 
+        const filtered = result.data.filter((course: Course) =>
           course.status === '开设中' && course.enrolledStudents < course.maxStudents
         );
         setAvailableCourses(filtered);
@@ -104,7 +108,7 @@ export function useEnrollmentFormModal(
       },
     }
   );
-  
+
   // 获取可选学生列表（状态为在读）
   const { run: fetchAvailableStudents } = useRequest(
     async () => {
@@ -118,7 +122,7 @@ export function useEnrollmentFormModal(
     {
       manual: true,
       onSuccess: (result) => {
-        const filtered = result.data.filter((student: Student) => 
+        const filtered = result.data.filter((student: Student) =>
           student.status === '在读'
         );
         setAvailableStudents(filtered);
@@ -128,6 +132,22 @@ export function useEnrollmentFormModal(
       },
     }
   );
+
+  // 检查学生是否已选该课程
+  const checkDuplicateEnrollment = async (studentId: string, courseId: string): Promise<boolean> => {
+    try {
+      const response = await fetch(`/api/enrollments?studentId=${studentId}&courseId=${courseId}`);
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.message || '检查选课记录失败');
+      }
+      // 如果返回的数据中有记录，说明已经选过这门课了
+      return result.data && result.data.length > 0;
+    } catch (error) {
+      console.error('检查重复选课失败:', error);
+      return false; // 出错时默认允许继续，避免阻塞用户操作
+    }
+  };
 
   // 创建选课
   const { run: createEnrollment, loading: createLoading } = useRequest(
@@ -219,10 +239,10 @@ export function useEnrollmentFormModal(
       studentId: record.studentId,
       courseId: record.courseId,
     });
-    
+
     setLoadingData(true);
     setFormModalVisible(true);
-    
+
     Promise.all([
       fetchAvailableCourses(),
       fetchAvailableStudents(),
@@ -246,6 +266,15 @@ export function useEnrollmentFormModal(
 
   // 表单提交
   const handleSubmit = async (values: EnrollmentFormData) => {
+    // 仅在新增选课时检查重复
+    if (!editingEnrollment) {
+      const isDuplicate = await checkDuplicateEnrollment(values.studentId, values.courseId);
+      if (isDuplicate) {
+        message.warning('该学生已经选择了此课程，不能重复选课！');
+        return; // 阻止提交
+      }
+    }
+
     if (editingEnrollment) {
       updateEnrollment({ id: editingEnrollment._id, data: values });
     } else {
@@ -256,37 +285,40 @@ export function useEnrollmentFormModal(
   // 课程选择变化
   const handleCourseChange = (courseId: string) => {
     const course = availableCourses.find(c => c._id === courseId);
-    setSelectedCourse(course || null);
+    if (course) {
+      setSelectedCourse(course);
+    }
   };
 
-  // 渲染课程信息骨架屏
-  const renderCourseInfoSkeleton = () => (
-    <div style={{ marginTop: 16, padding: 16, background: '#f5f5f5', borderRadius: 4 }}>
-      <Spin tip="加载课程信息...">
-        <div style={{ minHeight: 120 }} />
-      </Spin>
-    </div>
-  );
-
-  // 渲染课程信息
-  const renderCourseInfo = (course: Course) => (
-    <div style={{ marginTop: 16, padding: 16, background: '#f5f5f5', borderRadius: 4 }}>
-      <Descriptions column={2} size="small">
-        <Descriptions.Item label="课程编号">{course.courseCode}</Descriptions.Item>
-        <Descriptions.Item label="课程名称">{course.courseName}</Descriptions.Item>
-        <Descriptions.Item label="学分">{course.credit}</Descriptions.Item>
-        <Descriptions.Item label="授课教师">{course.teacher.name}</Descriptions.Item>
-        <Descriptions.Item label="上课时间" span={2}>{course.schedule}</Descriptions.Item>
-        <Descriptions.Item label="上课地点" span={2}>
-          {course.classroom.building} {course.classroom.roomNumber}
-        </Descriptions.Item>
-        <Descriptions.Item label="选课人数" span={2}>
-          <Tag color={course.enrolledStudents >= course.maxStudents ? 'red' : 'green'}>
-            {course.enrolledStudents} / {course.maxStudents}
-          </Tag>
-        </Descriptions.Item>
-      </Descriptions>
-    </div>
+  // 渲染课程信息卡片
+  const renderCourseCard = () => (
+    <Card title="课程信息" style={{ marginTop: 16 }}>
+      {loadingData ? (
+        <Spin tip="加载课程信息...">
+          <div style={{ minHeight: 120 }} />
+        </Spin>
+      ) : selectedCourse ? (
+        <Descriptions column={2} size="small">
+          <Descriptions.Item label="课程编号">{selectedCourse.courseCode}</Descriptions.Item>
+          <Descriptions.Item label="课程名称">{selectedCourse.courseName}</Descriptions.Item>
+          <Descriptions.Item label="学分">{selectedCourse.credit}</Descriptions.Item>
+          <Descriptions.Item label="授课教师">{selectedCourse.teacher.name}</Descriptions.Item>
+          <Descriptions.Item label="上课时间" span={2}>{selectedCourse.schedule}</Descriptions.Item>
+          <Descriptions.Item label="上课地点" span={2}>
+            {selectedCourse.classroom.building} {selectedCourse.classroom.roomNumber}
+          </Descriptions.Item>
+          <Descriptions.Item label="选课人数" span={2}>
+            <Tag color={selectedCourse.enrolledStudents >= selectedCourse.maxStudents ? 'red' : 'green'}>
+              {selectedCourse.enrolledStudents} / {selectedCourse.maxStudents}
+            </Tag>
+          </Descriptions.Item>
+        </Descriptions>
+      ) : (
+        <div style={{ minHeight: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999' }}>
+          请选择课程以查看详细信息
+        </div>
+      )}
+    </Card>
   );
 
   // 渲染表单内容
@@ -340,7 +372,7 @@ export function useEnrollmentFormModal(
         />
       </Form.Item>
 
-      {loadingData ? renderCourseInfoSkeleton() : selectedCourse ? renderCourseInfo(selectedCourse) : null}
+      {renderCourseCard()}
 
       <Form.Item style={{ marginBottom: 0, textAlign: 'right', marginTop: 24 }}>
         <Space>

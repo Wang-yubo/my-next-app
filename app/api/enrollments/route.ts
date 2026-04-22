@@ -12,10 +12,17 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const pageSize = parseInt(searchParams.get('pageSize') || '10');
     const search = searchParams.get('search') || '';
+    const studentId = searchParams.get('studentId');
+    const courseId = searchParams.get('courseId');
 
     // 构建查询条件
     const query: any = { status: '已选课' };
-    if (search) {
+    
+    // 如果提供了学生ID和课程ID，则用于检查重复选课
+    if (studentId && courseId) {
+      query.studentId = studentId;
+      query.courseId = courseId;
+    } else if (search) {
       query.$or = [
         { courseCode: { $regex: search, $options: 'i' } },
         { courseName: { $regex: search, $options: 'i' } },
