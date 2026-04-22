@@ -21,6 +21,7 @@ import {
   ApiOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  ScheduleOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import Link from 'next/link';
@@ -77,6 +78,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       icon: <BookOutlined />,
       label: '课程管理',
       href: '/dashboard/courses',
+    },
+    {
+      key: '/dashboard/enrollments',
+      icon: <ScheduleOutlined />,
+      label: '选课管理',
+      href: '/dashboard/enrollments',
     },
     {
       type: 'divider',
