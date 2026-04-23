@@ -1,14 +1,21 @@
 'use client';
 
-import { Button } from 'antd';
-import { ArrowRightOutlined, RocketOutlined } from '@ant-design/icons';
+import { Button, Input, Form, Checkbox } from 'antd';
+import { ArrowRightOutlined, UserOutlined, LockOutlined, ScanOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
-export default function WelcomePage() {
+export default function LoginPage() {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
-  const handleEnter = () => {
-    router.push('/dashboard');
+  const handleLogin = async (values: any) => {
+    setLoading(true);
+    // TODO: 实现真实登录逻辑
+    setTimeout(() => {
+      setLoading(false);
+      router.push('/dashboard');
+    }, 1500);
   };
 
   return (
@@ -17,9 +24,6 @@ export default function WelcomePage() {
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0d1229 100%)',
         display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
         position: 'relative',
         overflow: 'hidden',
       }}
@@ -54,13 +58,17 @@ export default function WelcomePage() {
         }}
       />
 
-      {/* 主内容 */}
+      {/* 左半部分 - 欢迎信息 */}
       <div
         style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '40px 20px',
           position: 'relative',
           zIndex: 1,
-          textAlign: 'center',
-          padding: '40px 20px',
         }}
       >
         {/* 欢迎文字 */}
@@ -132,35 +140,6 @@ export default function WelcomePage() {
           ))}
         </div>
 
-        {/* 进入系统按钮 */}
-        <Button
-          type="primary"
-          size="large"
-          onClick={handleEnter}
-          icon={<ArrowRightOutlined />}
-          style={{
-            height: '56px',
-            padding: '0 40px',
-            fontSize: '18px',
-            fontWeight: '600',
-            borderRadius: '28px',
-            background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-            border: 'none',
-            boxShadow: '0 4px 20px rgba(59, 130, 246, 0.4)',
-            transition: 'all 0.3s ease',
-            letterSpacing: '4px',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 6px 30px rgba(59, 130, 246, 0.6)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 4px 20px rgba(59, 130, 246, 0.4)';
-          }}
-        >
-          进入系统
-        </Button>
 
         {/* 底部提示 */}
         <p
@@ -175,7 +154,224 @@ export default function WelcomePage() {
         </p>
       </div>
 
-      {/* 全局样式 - 动画 */}
+      {/* 右半部分 - 登录表单 */}
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '40px',
+          position: 'relative',
+          zIndex: 1,
+        }}
+      >
+        <div
+          style={{
+            width: '100%',
+            maxWidth: '480px',
+            padding: '50px 40px',
+            background: 'rgba(15, 23, 42, 0.6)',
+            backdropFilter: 'blur(20px)',
+            borderRadius: '24px',
+            border: '1px solid rgba(59, 130, 246, 0.2)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          {/* 表单顶部装饰线 */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '3px',
+              background: 'linear-gradient(90deg, transparent, #3b82f6, #60a5fa, #3b82f6, transparent)',
+            }}
+          />
+
+          {/* 角标装饰 */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '20px',
+              right: '20px',
+              width: '40px',
+              height: '40px',
+              border: '2px solid rgba(59, 130, 246, 0.3)',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <ScanOutlined style={{ color: '#3b82f6', fontSize: '20px' }} />
+          </div>
+
+          {/* 表单标题 */}
+          <h2
+            style={{
+              fontSize: '32px',
+              fontWeight: '700',
+              margin: '0 0 10px 0',
+              background: 'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              letterSpacing: '4px',
+            }}
+          >
+            系统登录
+          </h2>
+
+          <p
+            style={{
+              color: 'rgba(148, 163, 184, 0.7)',
+              fontSize: '14px',
+              margin: '0 0 40px 0',
+              letterSpacing: '2px',
+            }}
+          >
+            欢迎回来，请登录您的账户
+          </p>
+
+          {/* 登录表单 */}
+          <Form
+            name="login"
+            onFinish={handleLogin}
+            layout="vertical"
+            size="large"
+            autoComplete="off"
+          >
+            <Form.Item
+              name="username"
+              rules={[{ required: true, message: '请输入用户名!' }]}
+            >
+              <Input
+                prefix={<UserOutlined style={{ color: 'rgba(59, 130, 246, 0.8)' }} />}
+                placeholder="用户名 / 邮箱"
+                style={{
+                  height: '50px',
+                  background: 'rgba(30, 41, 59, 0.5)',
+                  border: '1px solid rgba(59, 130, 246, 0.2)',
+                  borderRadius: '12px',
+                  color: '#e2e8f0',
+                  fontSize: '15px',
+                  transition: 'all 0.3s ease',
+                }}
+                className="tech-input"
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="password"
+              rules={[{ required: true, message: '请输入密码!' }]}
+            >
+              <Input.Password
+                prefix={<LockOutlined style={{ color: 'rgba(59, 130, 246, 0.8)' }} />}
+                placeholder="密码"
+                style={{
+                  height: '50px',
+                  background: 'rgba(30, 41, 59, 0.5)',
+                  border: '1px solid rgba(59, 130, 246, 0.2)',
+                  borderRadius: '12px',
+                  color: '#e2e8f0',
+                  fontSize: '15px',
+                  transition: 'all 0.3s ease',
+                }}
+                className="tech-input"
+              />
+            </Form.Item>
+
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '30px',
+              }}
+            >
+              <Checkbox
+                style={{
+                  color: 'rgba(148, 163, 184, 0.8)',
+                  fontSize: '14px',
+                }}
+              >
+                记住我
+              </Checkbox>
+              <a
+                href="#"
+                style={{
+                  color: '#60a5fa',
+                  fontSize: '14px',
+                  textDecoration: 'none',
+                  transition: 'color 0.3s ease',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = '#3b82f6')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = '#60a5fa')}
+              >
+                忘记密码?
+              </a>
+            </div>
+
+            <Form.Item>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={loading}
+                block
+                style={{
+                  height: '52px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                  border: 'none',
+                  boxShadow: '0 4px 20px rgba(59, 130, 246, 0.4)',
+                  transition: 'all 0.3s ease',
+                  letterSpacing: '4px',
+                  marginTop: '10px',
+                }}
+                className="tech-button"
+              >
+                {loading ? '登录中...' : '登 录'}
+              </Button>
+            </Form.Item>
+          </Form>
+
+          {/* 底部注册链接 */}
+          <div
+            style={{
+              textAlign: 'center',
+              marginTop: '30px',
+              paddingTop: '30px',
+              borderTop: '1px solid rgba(59, 130, 246, 0.1)',
+            }}
+          >
+            <span style={{ color: 'rgba(148, 163, 184, 0.6)', fontSize: '14px' }}>
+              还没有账户?{' '}
+            </span>
+            <a
+              href="#"
+              style={{
+                color: '#60a5fa',
+                fontSize: '14px',
+                fontWeight: '600',
+                textDecoration: 'none',
+                transition: 'color 0.3s ease',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#3b82f6')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = '#60a5fa')}
+            >
+              立即注册
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* 全局样式 - 动画和特效 */}
       <style jsx global>{`
         @keyframes pulse {
           0%, 100% {
@@ -184,6 +380,66 @@ export default function WelcomePage() {
           50% {
             opacity: 1;
           }
+        }
+
+        .tech-input:hover,
+        .tech-input:focus {
+          border-color: #3b82f6 !important;
+          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+        }
+
+        /* 修复 placeholder 颜色 - 使用更强的选择器 */
+        .tech-input input::placeholder,
+        .tech-input textarea::placeholder {
+          color: rgba(148, 163, 184, 0.7) !important;
+          opacity: 1 !important;
+        }
+
+        /* 兼容不同浏览器 */
+        .tech-input input::-webkit-input-placeholder,
+        .tech-input textarea::-webkit-input-placeholder {
+          color: rgba(148, 163, 184, 0.7) !important;
+          opacity: 1 !important;
+        }
+
+        .tech-input input::-moz-placeholder,
+        .tech-input textarea::-moz-placeholder {
+          color: rgba(148, 163, 184, 0.7) !important;
+          opacity: 1 !important;
+        }
+
+        .tech-input input:-ms-input-placeholder,
+        .tech-input textarea:-ms-input-placeholder {
+          color: rgba(148, 163, 184, 0.7) !important;
+          opacity: 1 !important;
+        }
+
+        .tech-button:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 30px rgba(59, 130, 246, 0.6) !important;
+        }
+
+        .tech-button:active {
+          transform: translateY(0);
+        }
+
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+          background: rgba(15, 23, 42, 0.3);
+        }
+
+        ::-webkit-scrollbar-thumb {
+          background: rgba(59, 130, 246, 0.4);
+          border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+          background: rgba(59, 130, 246, 0.6);
         }
       `}</style>
     </div>
