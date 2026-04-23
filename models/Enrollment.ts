@@ -1,19 +1,19 @@
 import mongoose, { Schema, Model } from 'mongoose';
 
 export interface IEnrollment {
-  _id: string;
-  studentId: string;
-  courseId: string;
-  courseCode: string;
-  courseName: string;
-  credit: number;
-  teacher: string;
-  schedule: string;
-  classroom: string;
-  enrollDate: Date;
-  status: '已选课' | '已退课';
-  createdAt: Date;
-  updatedAt: Date;
+  _id: string; // MongoDB自动生成的ID
+  studentId: string; // 学生学号（关联Student表）
+  courseId: string; // 课程ID（关联Course表）
+  courseCode: string; // 课程编号
+  courseName: string; // 课程名称
+  credit: number; // 课程学分
+  teacher: string; // 授课教师姓名
+  schedule: string; // 上课时间
+  classroom: string; // 上课教室
+  enrollDate: Date; // 选课日期
+  status: '已选课' | '已退课'; // 选课状态
+  createdAt: Date; // 记录创建时间
+  updatedAt: Date; // 记录更新时间
 }
 
 const enrollmentSchema = new Schema<IEnrollment>(

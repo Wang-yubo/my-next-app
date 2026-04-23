@@ -1,9 +1,11 @@
 'use client';
 
-import { Button, Input, Form, Checkbox } from 'antd';
+import { Button, Input, Form, Checkbox, message, Select } from 'antd';
 import { ArrowRightOutlined, UserOutlined, LockOutlined, ScanOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+
+const { Option } = Select;
 
 export default function LoginPage() {
   const router = useRouter();
@@ -11,11 +13,35 @@ export default function LoginPage() {
 
   const handleLogin = async (values: any) => {
     setLoading(true);
-    // TODO: 实现真实登录逻辑
-    setTimeout(() => {
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: values.username,
+          password: values.password,
+          role: values.role || 'student',
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        message.success('登录成功！');
+        // 保存用户信息到 localStorage
+        localStorage.setItem('user_info', JSON.stringify(result.data.user));
+        router.push('/dashboard');
+      } else {
+        message.error(result.message || '登录失败');
+      }
+    } catch (error) {
+      console.error('登录错误:', error);
+      message.error('登录失败，请稍后重试');
+    } finally {
       setLoading(false);
-      router.push('/dashboard');
-    }, 1500);
+    }
   };
 
   return (
@@ -58,10 +84,10 @@ export default function LoginPage() {
         }}
       />
 
-      {/* 左半部分 - 欢迎信息 */}
+      {/* 左半部分 - 欢迎信息 (占2/3宽度) */}
       <div
         style={{
-          flex: 1,
+          flex: '0 0 66.666%',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -154,30 +180,29 @@ export default function LoginPage() {
         </p>
       </div>
 
-      {/* 右半部分 - 登录表单 */}
+      {/* 右半部分 - 登录表单 (悬浮定位) */}
       <div
         style={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '40px',
-          position: 'relative',
-          zIndex: 1,
+          position: 'fixed',
+          right: '8%',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          width: '480px',
+          zIndex: 10,
         }}
       >
         <div
           style={{
             width: '100%',
-            maxWidth: '480px',
             padding: '50px 40px',
-            background: 'rgba(15, 23, 42, 0.6)',
+            background: 'rgba(15, 23, 42, 0.7)',
             backdropFilter: 'blur(20px)',
             borderRadius: '24px',
-            border: '1px solid rgba(59, 130, 246, 0.2)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+            border: '1px solid rgba(59, 130, 246, 0.3)',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(59, 130, 246, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
             position: 'relative',
             overflow: 'hidden',
+            animation: 'float 6s ease-in-out infinite',
           }}
         >
           {/* 表单顶部装饰线 */}
@@ -251,7 +276,7 @@ export default function LoginPage() {
             >
               <Input
                 prefix={<UserOutlined style={{ color: 'rgba(59, 130, 246, 0.8)' }} />}
-                placeholder="用户名 / 邮箱"
+                placeholder="学号/工号 / 邮箱"
                 style={{
                   height: '50px',
                   background: 'rgba(30, 41, 59, 0.5)',
@@ -263,6 +288,28 @@ export default function LoginPage() {
                 }}
                 className="tech-input"
               />
+            </Form.Item>
+
+            <Form.Item
+              name="role"
+              initialValue="student"
+              rules={[{ required: true, message: '请选择角色!' }]}
+            >
+              <Select
+                placeholder="选择角色"
+                style={{
+                  height: '50px',
+                  background: 'rgba(30, 41, 59, 0.5)',
+                  border: '1px solid rgba(59, 130, 246, 0.2)',
+                  borderRadius: '12px',
+                  color: '#e2e8f0',
+                  fontSize: '15px',
+                }}
+                className="tech-input"
+              >
+                <Option value="student">学生</Option>
+                <Option value="teacher">教师</Option>
+              </Select>
             </Form.Item>
 
             <Form.Item
@@ -355,6 +402,10 @@ export default function LoginPage() {
             </span>
             <a
               href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                router.push('/register');
+              }}
               style={{
                 color: '#60a5fa',
                 fontSize: '14px',
@@ -379,6 +430,16 @@ export default function LoginPage() {
           }
           50% {
             opacity: 1;
+          }
+        }
+
+        /* 登录表单悬浮动画 */
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-10px);
           }
         }
 

@@ -10,6 +10,7 @@ import {
   Space,
   Breadcrumb,
   ConfigProvider,
+  message,
 } from 'antd';
 import {
   UserOutlined,
@@ -25,7 +26,7 @@ import {
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import ThemeSwitcher from './theme-switcher';
 import LoadingSkeleton from './loading';
 
@@ -39,18 +40,26 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [primaryColor, setPrimaryColor] = useState('#1677ff');
   const [isClient, setIsClient] = useState(false);
+  const [userInfo, setUserInfo] = useState<{ name: string; role: string } | null>(null);
   const {
     token: { colorBgContainer, borderRadiusLG, colorText, colorBorderSecondary, colorTextSecondary },
   } = theme.useToken();
 
   const pathname = usePathname();
+  const router = useRouter();
 
-  // 客户端水合后立即读取主题色
+  // 客户端水合后立即读取主题色和用户信息
   useEffect(() => {
     setIsClient(true);
     const savedColor = localStorage.getItem('theme-color');
     if (savedColor) {
       setPrimaryColor(savedColor);
+    }
+    
+    // 从 localStorage 获取用户信息（登录时保存）
+    const savedUserInfo = localStorage.getItem('user_info');
+    if (savedUserInfo) {
+      setUserInfo(JSON.parse(savedUserInfo));
     }
   }, []);
 
@@ -103,6 +112,27 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     return currentItem?.label || '未知';
   };
 
+  // 处理退出登录
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('/api/logout', {
+        method: 'POST',
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        message.success('已退出登录');
+        // 清除本地存储的用户信息
+        localStorage.removeItem('user_info');
+        router.push('/');
+      }
+    } catch (error) {
+      console.error('退出登录错误:', error);
+      message.error('退出失败，请稍后重试');
+    }
+  };
+
   // 用户下拉菜单
   const userMenuItems: MenuProps['items'] = [
     {
@@ -122,6 +152,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       key: 'logout',
       icon: <LogoutOutlined />,
       label: '退出登录',
+      onClick: handleLogout,
     },
   ];
 
@@ -231,7 +262,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   style={{ backgroundColor: primaryColor }}
                   icon={<UserOutlined />}
                 />
-                <span>管理员</span>
+                <span>{userInfo?.name || '管理员'}</span>
               </Space>
             </Dropdown>
           </Space>

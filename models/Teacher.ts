@@ -1,24 +1,25 @@
 import mongoose, { Schema, Model } from 'mongoose';
 
-export interface IStudent {
-  id: string; // 学号（唯一标识）
+export interface ITeacher {
+  id: string; // 工号（唯一标识）
   name: string; // 姓名
   gender: '男' | '女'; // 性别
   age: number; // 年龄
-  idCard: string; // 身份证号（唯一标识）
-  major: string; // 专业名称
-  className: string; // 班级（例如：计算机1班）
-  grade: string; // 年级（例如：2024级）
+  department: string; // 所属院系
+  researchArea: string; // 研究方向/专业领域
+  officeLocation: string; // 办公地点（例如：计算机楼301室）
+  title: '教授' | '副教授' | '讲师' | '助教'; // 职称
   phone: string; // 手机号码
   email: string; // 电子邮箱
   password: string; // 密码（加密存储）
-  status: '在读' | '休学' | '毕业'; // 学籍状态
-  enrollDate: Date; // 入学日期
+  education: '博士' | '硕士' | '本科'; // 学历
+  hireDate: Date; // 入职日期
+  status: '在职' | '离职' | '休假'; // 工作状态
   createdAt: Date; // 记录创建时间
   updatedAt: Date; // 记录更新时间
 }
 
-const studentSchema = new Schema<IStudent>(
+const teacherSchema = new Schema<ITeacher>(
   {
     id: {
       type: String,
@@ -38,21 +39,21 @@ const studentSchema = new Schema<IStudent>(
       type: Number,
       required: true,
     },
-    idCard: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-    major: {
+    department: {
       type: String,
       required: true,
     },
-    className: {
+    researchArea: {
       type: String,
       required: true,
     },
-    grade: {
+    officeLocation: {
       type: String,
+      required: true,
+    },
+    title: {
+      type: String,
+      enum: ['教授', '副教授', '讲师', '助教'],
       required: true,
     },
     phone: {
@@ -67,14 +68,19 @@ const studentSchema = new Schema<IStudent>(
       type: String,
       required: true,
     },
-    status: {
+    education: {
       type: String,
-      enum: ['在读', '休学', '毕业'],
-      default: '在读',
+      enum: ['博士', '硕士', '本科'],
+      required: true,
     },
-    enrollDate: {
+    hireDate: {
       type: Date,
       required: true,
+    },
+    status: {
+      type: String,
+      enum: ['在职', '离职', '休假'],
+      default: '在职',
     },
   },
   {
@@ -82,12 +88,13 @@ const studentSchema = new Schema<IStudent>(
   }
 );
 
-// 如果没有索引则创建索引
-studentSchema.index({ id: 1 });
-studentSchema.index({ name: 1 });
-studentSchema.index({ major: 1 });
+// 创建索引
+teacherSchema.index({ id: 1 });
+teacherSchema.index({ name: 1 });
+teacherSchema.index({ department: 1 });
+teacherSchema.index({ title: 1 });
 
-const Student: Model<IStudent> =
-  mongoose.models.Student || mongoose.model<IStudent>('Student', studentSchema);
+const Teacher: Model<ITeacher> =
+  mongoose.models.Teacher || mongoose.model<ITeacher>('Teacher', teacherSchema);
 
-export default Student;
+export default Teacher;

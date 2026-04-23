@@ -1,39 +1,39 @@
 import mongoose, { Schema, Model } from 'mongoose';
 
 export interface ICourse {
-  courseCode: string;
-  courseName: string;
-  description: string;
-  credit: number;
-  hours: number;
-  semester: string;
+  courseCode: string; // 课程编号（唯一标识）
+  courseName: string; // 课程名称
+  description: string; // 课程描述/简介
+  credit: number; // 学分（1-6分）
+  hours: number; // 学时（总课时数）
+  semester: string; // 开课学期（例如：2024年秋季学期）
   textbook: {
-    title: string;
-    author: string;
-    publisher: string;
-    isbn: string;
-    price: number;
+    title: string; // 教材名称
+    author: string; // 作者
+    publisher: string; // 出版社
+    isbn: string; // ISBN号
+    price: number; // 价格
   };
   teacher: {
-    name: string;
-    title: string;
-    email: string;
-    phone: string;
+    name: string; // 授课教师姓名
+    title: string; // 教师职称
+    email: string; // 教师邮箱
+    phone: string; // 教师电话
   };
   classroom: {
-    building: string;
-    roomNumber: string;
-    capacity: number;
-    location: string;
+    building: string; // 教学楼名称
+    roomNumber: string; // 教室编号
+    capacity: number; // 教室容量
+    location: string; // 详细位置描述
   };
-  tuition: number;
-  maxStudents: number;
-  enrolledStudents: number;
-  status: '开设中' | '已结课' | '待审核';
-  schedule: string;
-  prerequisite: string[];
-  createdAt: Date;
-  updatedAt: Date;
+  tuition: number; // 学费
+  maxStudents: number; // 最大选课人数
+  enrolledStudents: number; // 已选课人数
+  status: '开设中' | '已结课' | '待审核'; // 课程状态
+  schedule: string; // 上课时间（例如：周一 3-4节）
+  prerequisite: string[]; // 先修课程列表
+  createdAt: Date; // 记录创建时间
+  updatedAt: Date; // 记录更新时间
 }
 
 const courseSchema = new Schema<ICourse>(
