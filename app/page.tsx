@@ -1,15 +1,14 @@
 'use client';
 
-import { Button, Input, Form, Checkbox, message, Select } from 'antd';
+import { Button, Input, Form, Checkbox, message } from 'antd';
 import { ArrowRightOutlined, UserOutlined, LockOutlined, ScanOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-const { Option } = Select;
-
 export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [role, setRole] = useState<'student' | 'teacher'>('student');
 
   const handleLogin = async (values: any) => {
     setLoading(true);
@@ -22,7 +21,7 @@ export default function LoginPage() {
         body: JSON.stringify({
           username: values.username,
           password: values.password,
-          role: values.role || 'student',
+          role: role,
         }),
       });
 
@@ -270,6 +269,64 @@ export default function LoginPage() {
             size="large"
             autoComplete="off"
           >
+            {/* 角色选择 */}
+            <div
+              style={{
+                display: 'flex',
+                gap: '12px',
+                marginBottom: '20px',
+              }}
+            >
+              <Button
+                block
+                onClick={() => setRole('student')}
+                style={{
+                  height: '44px',
+                  fontSize: '15px',
+                  fontWeight: '600',
+                  borderRadius: '10px',
+                  background: role === 'student' 
+                    ? 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)'
+                    : 'rgba(30, 41, 59, 0.5)',
+                  border: role === 'student' 
+                    ? 'none'
+                    : '1px solid rgba(59, 130, 246, 0.2)',
+                  color: role === 'student' ? '#fff' : 'rgba(148, 163, 184, 0.8)',
+                  boxShadow: role === 'student' 
+                    ? '0 4px 15px rgba(59, 130, 246, 0.4)'
+                    : 'none',
+                  transition: 'all 0.3s ease',
+                  letterSpacing: '2px',
+                }}
+              >
+                👨‍🎓 学生
+              </Button>
+              <Button
+                block
+                onClick={() => setRole('teacher')}
+                style={{
+                  height: '44px',
+                  fontSize: '15px',
+                  fontWeight: '600',
+                  borderRadius: '10px',
+                  background: role === 'teacher' 
+                    ? 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)'
+                    : 'rgba(30, 41, 59, 0.5)',
+                  border: role === 'teacher' 
+                    ? 'none'
+                    : '1px solid rgba(59, 130, 246, 0.2)',
+                  color: role === 'teacher' ? '#fff' : 'rgba(148, 163, 184, 0.8)',
+                  boxShadow: role === 'teacher' 
+                    ? '0 4px 15px rgba(59, 130, 246, 0.4)'
+                    : 'none',
+                  transition: 'all 0.3s ease',
+                  letterSpacing: '2px',
+                }}
+              >
+                👨‍🏫 教师
+              </Button>
+            </div>
+
             <Form.Item
               name="username"
               rules={[{ required: true, message: '请输入用户名!' }]}
@@ -288,28 +345,6 @@ export default function LoginPage() {
                 }}
                 className="tech-input"
               />
-            </Form.Item>
-
-            <Form.Item
-              name="role"
-              initialValue="student"
-              rules={[{ required: true, message: '请选择角色!' }]}
-            >
-              <Select
-                placeholder="选择角色"
-                style={{
-                  height: '50px',
-                  background: 'rgba(30, 41, 59, 0.5)',
-                  border: '1px solid rgba(59, 130, 246, 0.2)',
-                  borderRadius: '12px',
-                  color: '#e2e8f0',
-                  fontSize: '15px',
-                }}
-                className="tech-input"
-              >
-                <Option value="student">学生</Option>
-                <Option value="teacher">教师</Option>
-              </Select>
             </Form.Item>
 
             <Form.Item

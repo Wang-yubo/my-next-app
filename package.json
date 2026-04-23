@@ -17,6 +17,7 @@
     "bcryptjs": "^3.0.3",
     "crypto-js": "^4.2.0",
     "dayjs": "^1.11.20",
+    "dotenv": "^17.4.2",
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.1.1",
     "mongoose": "^9.4.1",
@@ -38,6 +39,7 @@
     "server-only": "^0.0.1",
     "swagger-ui-react": "^5.32.4",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }

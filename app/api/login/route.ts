@@ -38,9 +38,33 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    console.log('登录调试信息:', {
+      username,
+      role,
+      userFound: !!user,
+      userName: user?.name,
+      userEmail: user?.email,
+      hasPassword: !!user?.password,
+      passwordType: typeof user?.password,
+      passwordLength: user?.password?.length || 0
+    });
+
     if (!user) {
       return NextResponse.json(
         { success: false, message: '用户名或密码错误' },
+        { status: 401 } as any
+      );
+    }
+
+    // 检查用户是否有密码
+    if (!user.password) {
+      console.error(`用户 ${user.email} 没有设置密码`, {
+        passwordValue: user.password,
+        passwordType: typeof user.password,
+        userKeys: Object.keys(user.toObject ? user.toObject() : user)
+      });
+      return NextResponse.json(
+        { success: false, message: '该账户未设置密码，请联系管理员' },
         { status: 401 } as any
       );
     }
