@@ -4,6 +4,7 @@ import React from 'react';
 import { Modal, Form, Input, Select, DatePicker, Button, Space, Row, Col, message } from 'antd';
 import { useRequest } from 'ahooks';
 import dayjs from 'dayjs';
+import { post, put } from '@/lib/request';
 
 interface Student {
   _id: string;
@@ -25,9 +26,12 @@ interface StudentFormData {
   gender: string;
   age: number;
   major: string;
+  className: string;
   grade: string;
+  idCard: string;
   phone: string;
   email: string;
+  password: string;
   status: '在读' | '休学' | '毕业';
   enrollDate: dayjs.Dayjs | null;
 }
@@ -58,19 +62,11 @@ export function useStudentFormModal(
   // 创建学生
   const { run: createStudent, loading: createLoading } = useRequest(
     async (data: StudentFormData) => {
-      const response = await fetch('/api/students', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...data,
-          age: parseInt(String(data.age)),
-          enrollDate: data.enrollDate?.toISOString() || new Date().toISOString(),
-        }),
+      const result = await post('/api/students', {
+        ...data,
+        age: parseInt(String(data.age)),
+        enrollDate: data.enrollDate?.toISOString() || new Date().toISOString(),
       });
-      const result = await response.json();
-      if (!result.success) {
-        throw new Error(result.message || '创建失败');
-      }
       return result;
     },
     {
@@ -95,19 +91,11 @@ export function useStudentFormModal(
   // 更新学生
   const { run: updateStudent, loading: updateLoading } = useRequest(
     async ({ id, data }: { id: string; data: StudentFormData }) => {
-      const response = await fetch(`/api/students/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...data,
-          age: parseInt(String(data.age)),
-          enrollDate: data.enrollDate?.toISOString() || new Date().toISOString(),
-        }),
+      const result = await put(`/api/students/${id}`, {
+        ...data,
+        age: parseInt(String(data.age)),
+        enrollDate: data.enrollDate?.toISOString() || new Date().toISOString(),
       });
-      const result = await response.json();
-      if (!result.success) {
-        throw new Error(result.message || '更新失败');
-      }
       return result;
     },
     {
@@ -144,9 +132,12 @@ export function useStudentFormModal(
       gender: record.gender,
       age: record.age,
       major: record.major,
+      className: record.className,
       grade: record.grade,
+      idCard: record.idCard,
       phone: record.phone,
       email: record.email,
+      password: '', // 编辑时不显示密码
       status: record.status,
       enrollDate: record.enrollDate ? dayjs(record.enrollDate) : null,
     });
@@ -250,6 +241,30 @@ export function useStudentFormModal(
       <Row gutter={16}>
         <Col span={12}>
           <Form.Item
+            label="班级"
+            name="className"
+            rules={[{ required: true, message: '请输入班级' }]}
+          >
+            <Input placeholder="如：电子商务1班" />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item
+            label="身份证号"
+            name="idCard"
+            rules={[
+              { required: true, message: '请输入身份证号' },
+              { pattern: /(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/, message: '请输入正确的身份证号' },
+            ]}
+          >
+            <Input placeholder="请输入身份证号" />
+          </Form.Item>
+        </Col>
+      </Row>
+
+      <Row gutter={16}>
+        <Col span={12}>
+          <Form.Item
             label="联系电话"
             name="phone"
             rules={[
@@ -273,6 +288,18 @@ export function useStudentFormModal(
           </Form.Item>
         </Col>
       </Row>
+
+      <Form.Item
+        label="密码"
+        name="password"
+        rules={[
+          { required: !editingStudent, message: '请输入密码' },
+          { min: 6, message: '密码长度不能少于6位' },
+        ]}
+        extra={editingStudent ? '留空则不修改密码' : undefined}
+      >
+        <Input.Password placeholder="请输入密码" />
+      </Form.Item>
 
       <Form.Item
         label="入学日期"

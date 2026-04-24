@@ -20,6 +20,7 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import { useRequest } from 'ahooks';
 import dayjs from 'dayjs';
+import { get, del } from '@/lib/request';
 import { useStudentDetailModal } from './hooks/useStudentDetailModal';
 import { useStudentFormModal } from './hooks/useStudentFormModal';
 
@@ -31,7 +32,9 @@ interface Student {
   name: string;
   gender: string;
   age: number;
+  idCard: string;
   major: string;
+  className: string;
   grade: string;
   phone: string;
   email: string;
@@ -67,18 +70,14 @@ export default function StudentsPage() {
   } = useRequest(
     async (params: { page?: number; pageSize?: number; search?: string } = {}) => {
       const { page = 1, pageSize = 10, search = '' } = params as any;
-      const queryParams = new URLSearchParams({
-        page: page.toString(),
-        pageSize: pageSize.toString(),
-        search,
+      
+      const result = await get('/api/students', {
+        params: {
+          page,
+          pageSize,
+          search,
+        },
       });
-
-      const response = await fetch(`/api/students?${queryParams}`);
-      const result = await response.json();
-
-      if (!result.success) {
-        throw new Error(result.message || '获取数据失败');
-      }
 
       return result;
     },
@@ -107,13 +106,7 @@ export default function StudentsPage() {
   // 删除学生
   const { run: deleteStudent, loading: deleteLoading } = useRequest(
     async (id: string) => {
-      const response = await fetch(`/api/students/${id}`, {
-        method: 'DELETE',
-      });
-      const result = await response.json();
-      if (!result.success) {
-        throw new Error(result.message || '删除失败');
-      }
+      const result = await del(`/api/students/${id}`);
       return result;
     },
     {
@@ -166,43 +159,55 @@ export default function StudentsPage() {
       title: '姓名',
       dataIndex: 'name',
       key: 'name',
-      width: 120,
+      width: 100,
     },
     {
       title: '性别',
       dataIndex: 'gender',
       key: 'gender',
-      width: 80,
+      width: 60,
     },
     {
       title: '年龄',
       dataIndex: 'age',
       key: 'age',
-      width: 80,
+      width: 60,
+    },
+    {
+      title: '身份证号',
+      dataIndex: 'idCard',
+      key: 'idCard',
+      width: 180,
     },
     {
       title: '专业',
       dataIndex: 'major',
       key: 'major',
-      width: 200,
+      width: 150,
+    },
+    {
+      title: '班级',
+      dataIndex: 'className',
+      key: 'className',
+      width: 120,
     },
     {
       title: '年级',
       dataIndex: 'grade',
       key: 'grade',
-      width: 100,
+      width: 90,
     },
     {
       title: '联系电话',
       dataIndex: 'phone',
       key: 'phone',
-      width: 140,
+      width: 130,
     },
     {
       title: '邮箱',
       dataIndex: 'email',
       key: 'email',
-      width: 220,
+      width: 200,
     },
     {
       title: '状态',
@@ -306,7 +311,7 @@ export default function StudentsPage() {
         columns={columns}
         dataSource={studentsData?.data || []}
         loading={studentsLoading}
-        scroll={{ x: 1500 }}
+        scroll={{ x: 1600 }}
         pagination={{
           current: pagination.current,
           pageSize: pagination.pageSize,

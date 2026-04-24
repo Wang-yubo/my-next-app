@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import Student from '@/models/Student';
+import bcrypt from 'bcryptjs';
 
 // GET - 获取学生列表
 export async function GET(request: NextRequest) {
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest) {
     console.error('获取学生列表失败:', error);
     return NextResponse.json(
       { success: false, message: '获取数据失败' },
-      { status: 500 }
+      { status: 500 } as any
     );
   }
 }
@@ -58,10 +59,14 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
-    // 生成学号
-    const count = await Student.countDocuments();
+    // 生成学号（S + 年份 + 已注册学生总数+1，不足6位补0）
     const year = new Date().getFullYear();
-    const studentId = `${year}${String(count + 1).padStart(3, '0')}`;
+    const studentCount = await Student.countDocuments();
+    const sequenceNumber = String(studentCount + 1).padStart(6, '0');
+    const studentId = `S${year}${sequenceNumber}`;
+
+    // 使用 bcrypt 加密密码（salt rounds = 10）
+    const hashedPassword = await bcrypt.hash(body.password, 10);
 
     const student = await Student.create({
       id: studentId,
@@ -69,9 +74,12 @@ export async function POST(request: NextRequest) {
       gender: body.gender,
       age: body.age,
       major: body.major,
+      className: body.className,
       grade: body.grade,
+      idCard: body.idCard,
       phone: body.phone,
       email: body.email,
+      password: hashedPassword,
       status: body.status || '在读',
       enrollDate: body.enrollDate || new Date(),
     });
@@ -86,12 +94,12 @@ export async function POST(request: NextRequest) {
     if (error.code === 11000) {
       return NextResponse.json(
         { success: false, message: '学号已存在' },
-        { status: 400 }
+        { status: 400 } as any
       );
     }
     return NextResponse.json(
       { success: false, message: '创建失败' },
-      { status: 500 }
+      { status: 500 } as any
     );
   }
 }

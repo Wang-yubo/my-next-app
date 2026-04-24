@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import Student from '@/models/Student';
+import bcrypt from 'bcryptjs';
 
 // GET - 获取单个学生
 export async function GET(
@@ -16,7 +17,7 @@ export async function GET(
     if (!student) {
       return NextResponse.json(
         { success: false, message: '学生不存在' },
-        { status: 404 }
+        { status: 404 } as any
       );
     }
 
@@ -28,7 +29,7 @@ export async function GET(
     console.error('获取学生详情失败:', error);
     return NextResponse.json(
       { success: false, message: '获取数据失败' },
-      { status: 500 }
+      { status: 500 } as any
     );
   }
 }
@@ -44,26 +45,36 @@ export async function PUT(
 
     const body = await request.json();
 
+    // 构建更新数据
+    const updateData: any = {
+      name: body.name,
+      gender: body.gender,
+      age: body.age,
+      major: body.major,
+      className: body.className,
+      grade: body.grade,
+      idCard: body.idCard,
+      phone: body.phone,
+      email: body.email,
+      status: body.status,
+      enrollDate: body.enrollDate,
+    };
+
+    // 只有当提供了新密码时才更新密码（需要加密）
+    if (body.password && body.password.trim() !== '') {
+      updateData.password = await bcrypt.hash(body.password, 10);
+    }
+
     const student = await Student.findOneAndUpdate(
       { id },
-      {
-        name: body.name,
-        gender: body.gender,
-        age: body.age,
-        major: body.major,
-        grade: body.grade,
-        phone: body.phone,
-        email: body.email,
-        status: body.status,
-        enrollDate: body.enrollDate,
-      },
+      updateData,
       { new: true, runValidators: true }
     );
 
     if (!student) {
       return NextResponse.json(
         { success: false, message: '学生不存在' },
-        { status: 404 }
+        { status: 404 } as any
       );
     }
 
@@ -76,7 +87,7 @@ export async function PUT(
     console.error('更新学生失败:', error);
     return NextResponse.json(
       { success: false, message: '更新失败' },
-      { status: 500 }
+      { status: 500 } as any
     );
   }
 }
@@ -95,7 +106,7 @@ export async function DELETE(
     if (!student) {
       return NextResponse.json(
         { success: false, message: '学生不存在' },
-        { status: 404 }
+        { status: 404 } as any
       );
     }
 
@@ -107,7 +118,7 @@ export async function DELETE(
     console.error('删除学生失败:', error);
     return NextResponse.json(
       { success: false, message: '删除失败' },
-      { status: 500 }
+      { status: 500 } as any
     );
   }
 }

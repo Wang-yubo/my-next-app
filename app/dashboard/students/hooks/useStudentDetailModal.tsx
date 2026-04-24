@@ -9,7 +9,9 @@ interface Student {
   name: string;
   gender: string;
   age: number;
+  idCard: string;
   major: string;
+  className: string;
   grade: string;
   phone: string;
   email: string;
@@ -57,13 +59,15 @@ export function useStudentDetailModal(): UseStudentDetailModalReturn {
         <Descriptions.Item label="姓名">{student.name}</Descriptions.Item>
         <Descriptions.Item label="性别">{student.gender}</Descriptions.Item>
         <Descriptions.Item label="年龄">{student.age}</Descriptions.Item>
+        <Descriptions.Item label="身份证号" span={2}>{student.idCard}</Descriptions.Item>
         <Descriptions.Item label="专业" span={2}>{student.major}</Descriptions.Item>
+        <Descriptions.Item label="班级">{student.className}</Descriptions.Item>
         <Descriptions.Item label="年级">{student.grade}</Descriptions.Item>
+        <Descriptions.Item label="联系电话">{student.phone}</Descriptions.Item>
+        <Descriptions.Item label="邮箱">{student.email}</Descriptions.Item>
         <Descriptions.Item label="状态">
           <Tag color={statusColorMap[student.status]}>{student.status}</Tag>
         </Descriptions.Item>
-        <Descriptions.Item label="联系电话">{student.phone}</Descriptions.Item>
-        <Descriptions.Item label="邮箱" span={2}>{student.email}</Descriptions.Item>
         <Descriptions.Item label="入学日期" span={2}>{student.enrollDate}</Descriptions.Item>
       </Descriptions>
     </div>
