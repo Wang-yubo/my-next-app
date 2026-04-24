@@ -2,11 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import Enrollment from '@/models/Enrollment';
 import Course from '@/models/Course';
+import { getCurrentUser } from '@/lib/auth';
 
-// GET - 获取选课列表
+// GET - 获取选课列表（根据当前登录用户身份过滤）
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
+
+    // 获取当前登录用户信息
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return NextResponse.json(
+        { success: false, message: '未登录或登录已过期' },
+        { status: 401 }
+      );
+    }
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
@@ -18,11 +28,21 @@ export async function GET(request: NextRequest) {
     // 构建查询条件
     const query: any = { status: '已选课' };
     
+    // 根据用户身份过滤数据
+    if (currentUser.role === 'teacher') {
+      // 老师：只查询自己授课课程的选课记录
+      query.teacher = currentUser.name;
+    } else if (currentUser.role === 'student') {
+      // 学生：只查询自己的选课记录
+      query.studentId = currentUser.userId;
+    }
+    
     // 如果提供了学生ID和课程ID，则用于检查重复选课
     if (studentId && courseId) {
       query.studentId = studentId;
       query.courseId = courseId;
     } else if (search) {
+      // 在身份过滤的基础上添加搜索条件
       query.$or = [
         { courseCode: { $regex: search, $options: 'i' } },
         { courseName: { $regex: search, $options: 'i' } },
@@ -59,13 +79,31 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - 创建选课
+// POST - 创建选课（从 JWT Token 获取当前学生信息）
 export async function POST(request: NextRequest) {
   try {
     await connectDB();
 
+    // 获取当前登录用户信息
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return NextResponse.json(
+        { success: false, message: '未登录或登录已过期' },
+        { status: 401 }
+      );
+    }
+
+    // 验证用户角色必须是学生
+    if (currentUser.role !== 'student') {
+      return NextResponse.json(
+        { success: false, message: '只有学生可以选课' },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
-    const { courseId, studentId } = body;
+    const { courseId } = body;
+    const studentId = currentUser.userId; // 从 Token 中获取学生ID
 
     // 检查课程是否存在且状态为开设中
     const course: any = await Course.findById(courseId).lean();

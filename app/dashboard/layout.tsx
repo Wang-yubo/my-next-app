@@ -74,25 +74,21 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       key: '/dashboard',
       icon: <DashboardOutlined />,
       label: '仪表盘',
-      href: '/dashboard',
     },
     {
       key: '/dashboard/students',
       icon: <TeamOutlined />,
       label: '学生管理',
-      href: '/dashboard/students',
     },
     {
       key: '/dashboard/courses',
       icon: <BookOutlined />,
       label: '课程管理',
-      href: '/dashboard/courses',
     },
     {
       key: '/dashboard/enrollments',
       icon: <ScheduleOutlined />,
       label: '选课管理',
-      href: '/dashboard/enrollments',
     },
     {
       type: 'divider',
@@ -101,15 +97,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       key: '/api-doc',
       icon: <ApiOutlined />,
       label: 'API 文档',
-      href: '/api-doc',
-      target: '_blank',
     },
   ];
 
   // 根据当前路径获取面包屑标题
   const getBreadcrumbTitle = () => {
-    const currentItem = menuItems.find(item => item.key === pathname);
-    return currentItem?.label || '未知';
+    const currentItem = menuItems.find((item): item is { key: string; label: React.ReactNode } => 
+      item !== null && item.type !== 'divider' && (item as any).key === pathname
+    );
+    return (currentItem as any)?.label || '未知';
   };
 
   // 处理退出登录
@@ -211,12 +207,22 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <Menu
           mode="inline"
           selectedKeys={[pathname]}
-          items={menuItems.map(item => 
-            item.type === 'divider' ? item : {
-              ...item,
-              label: <Link href={item.href!} target={item.target}>{item.label}</Link>
+          items={menuItems.map((item) => {
+            if (item?.type === 'divider') {
+              return item;
             }
-          )}
+            if (item && 'key' in item && item.key) {
+              return {
+                ...item,
+                label: (
+                  <Link href={String(item.key)} target={item.key === '/api-doc' ? '_blank' : undefined}>
+                    {item.label}
+                  </Link>
+                ),
+              };
+            }
+            return item;
+          })}
           style={{
             borderRight: 0,
             marginTop: 8,

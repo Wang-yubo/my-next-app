@@ -64,7 +64,7 @@ export default function EnrollmentsPage() {
     loading: enrollmentsLoading,
     run: fetchEnrollments,
   } = useRequest(
-    async (params = {}) => {
+    async (params: { page?: number; pageSize?: number; search?: string } = {}) => {
       const { page = 1, pageSize = 10, search = '' } = params as any;
       const queryParams = new URLSearchParams({
         page: page.toString(),

@@ -97,6 +97,33 @@ export function useCourseFormModal(
   const [editingCourse, setEditingCourse] = React.useState<Course | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [form] = Form.useForm<any>();
+  const [teachers, setTeachers] = React.useState<any[]>([]);
+
+  // 获取教师列表
+  React.useEffect(() => {
+    if (formModalVisible) {
+      fetch('/api/teachers?pageSize=100')
+        .then((res) => res.json())
+        .then((result) => {
+          if (result.success) {
+            setTeachers(result.data);
+            
+            // 如果是编辑模式，尝试匹配teacherId
+            if (editingCourse && editingCourse.teacher) {
+              const matchedTeacher = result.data.find(
+                (t: any) => t.name === editingCourse.teacher?.name
+              );
+              if (matchedTeacher) {
+                form.setFieldsValue({ teacherId: matchedTeacher._id });
+              }
+            }
+          }
+        })
+        .catch((error) => {
+          console.error('获取教师列表失败:', error);
+        });
+    }
+  }, [formModalVisible, editingCourse, form]);
 
   // 创建课程
   const { run: createCourse, loading: createLoading } = useRequest(
@@ -182,6 +209,7 @@ export function useCourseFormModal(
   const handleAdd = () => {
     setEditingCourse(null);
     form.resetFields();
+    setTeachers([]);
     setFormModalVisible(true);
   };
 
@@ -212,14 +240,33 @@ export function useCourseFormModal(
     setFormModalVisible(false);
     form.resetFields();
     setEditingCourse(null);
+    setTeachers([]);
+  };
+
+  // 教师选择变化处理
+  const handleTeacherChange = (teacherId: string) => {
+    const selectedTeacher = teachers.find((t) => t._id === teacherId);
+    if (selectedTeacher) {
+      form.setFieldsValue({
+        teacher: {
+          name: selectedTeacher.name,
+          title: selectedTeacher.title,
+          phone: selectedTeacher.phone,
+          email: selectedTeacher.email,
+        },
+      });
+    }
   };
 
   // 表单提交
   const handleSubmit = async (values: CourseFormData) => {
+    // 移除teacherId字段，只保留teacher对象
+    const { teacherId, ...submitData } = values as any;
+    
     if (editingCourse) {
-      updateCourse({ id: editingCourse._id, data: values });
+      updateCourse({ id: editingCourse._id, data: submitData });
     } else {
-      createCourse(values);
+      createCourse(submitData);
     }
   };
 
@@ -364,13 +411,38 @@ export function useCourseFormModal(
 
       <h3 style={{ margin: '24px 0 16px' }}>教师信息</h3>
       <Row gutter={16}>
+        <Col span={24}>
+          <Form.Item
+            label="选择教师"
+            name="teacherId"
+            rules={[{ required: true, message: '请选择教师' }]}
+          >
+            <Select
+              placeholder="请选择教师"
+              showSearch
+              optionFilterProp="children"
+              filterOption={(input, option) =>
+                String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+              }
+              onChange={handleTeacherChange}
+              disabled={!!editingCourse}
+              options={teachers.map((teacher) => ({
+                value: teacher._id,
+                label: `${teacher.name} - ${teacher.title} (${teacher.department})`,
+              }))}
+            />
+          </Form.Item>
+        </Col>
+      </Row>
+
+      <Row gutter={16}>
         <Col span={8}>
           <Form.Item
             label="教师姓名"
             name={['teacher', 'name'] as any}
             rules={[{ required: true, message: '请输入教师姓名' }]}
           >
-            <Input placeholder="请输入教师姓名" />
+            <Input placeholder="请输入教师姓名" disabled />
           </Form.Item>
         </Col>
         <Col span={8}>
@@ -379,7 +451,7 @@ export function useCourseFormModal(
             name={['teacher', 'title'] as any}
             rules={[{ required: true, message: '请输入职称' }]}
           >
-            <Input placeholder="如：教授、副教授" />
+            <Input placeholder="如：教授、副教授" disabled />
           </Form.Item>
         </Col>
         <Col span={8}>
@@ -391,7 +463,7 @@ export function useCourseFormModal(
               { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码' },
             ]}
           >
-            <Input placeholder="请输入电话" />
+            <Input placeholder="请输入电话" disabled />
           </Form.Item>
         </Col>
       </Row>
@@ -406,7 +478,7 @@ export function useCourseFormModal(
               { type: 'email', message: '请输入有效的邮箱地址' },
             ]}
           >
-            <Input placeholder="请输入邮箱" />
+            <Input placeholder="请输入邮箱" disabled />
           </Form.Item>
         </Col>
       </Row>

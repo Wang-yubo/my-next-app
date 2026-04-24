@@ -65,7 +65,7 @@ export default function StudentsPage() {
     loading: studentsLoading,
     run: fetchStudents,
   } = useRequest(
-    async (params = {}) => {
+    async (params: { page?: number; pageSize?: number; search?: string } = {}) => {
       const { page = 1, pageSize = 10, search = '' } = params as any;
       const queryParams = new URLSearchParams({
         page: page.toString(),

@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import Course from '@/models/Course';
+import Enrollment from '@/models/Enrollment';
+import { getCurrentUser } from '@/lib/auth';
 
-// GET - 获取课程列表
+// GET - 获取课程列表（所有用户可查看全部课程）
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
@@ -14,6 +16,8 @@ export async function GET(request: NextRequest) {
 
     // 构建查询条件
     const query: any = {};
+    
+    // 添加搜索条件
     if (search) {
       query.$or = [
         { courseCode: { $regex: search, $options: 'i' } },

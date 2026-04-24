@@ -83,7 +83,7 @@ export default function CoursesPage() {
     loading: coursesLoading,
     run: fetchCourses,
   } = useRequest(
-    async (params = {}) => {
+    async (params: { page?: number; pageSize?: number; search?: string } = {}) => {
       const { page = 1, pageSize = 10, search = '' } = params as any;
       const queryParams = new URLSearchParams({
         page: page.toString(),

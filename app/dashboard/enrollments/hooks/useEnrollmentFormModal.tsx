@@ -48,7 +48,6 @@ interface Student {
 }
 
 interface EnrollmentFormData {
-  studentId: string;
   courseId: string;
 }
 
@@ -78,7 +77,6 @@ export function useEnrollmentFormModal(
   const [form] = Form.useForm<any>();
   const [selectedCourse, setSelectedCourse] = React.useState<Course | null>(null);
   const [availableCourses, setAvailableCourses] = React.useState<Course[]>([]);
-  const [availableStudents, setAvailableStudents] = React.useState<Student[]>([]);
   const [loadingData, setLoadingData] = React.useState(false);
 
   useEffect(()=>{
@@ -109,43 +107,21 @@ export function useEnrollmentFormModal(
     }
   );
 
-  // 获取可选学生列表（状态为在读）
-  const { run: fetchAvailableStudents } = useRequest(
-    async () => {
-      const response = await fetch('/api/students?pageSize=100');
-      const result = await response.json();
-      if (!result.success) {
-        throw new Error(result.message || '获取学生列表失败');
-      }
-      return result;
-    },
-    {
-      manual: true,
-      onSuccess: (result) => {
-        const filtered = result.data.filter((student: Student) =>
-          student.status === '在读'
-        );
-        setAvailableStudents(filtered);
-      },
-      onError: (error) => {
-        message.error(error.message || '获取学生列表失败');
-      },
-    }
-  );
 
-  // 检查学生是否已选该课程
-  const checkDuplicateEnrollment = async (studentId: string, courseId: string): Promise<boolean> => {
+
+  // 检查当前登录学生是否已选该课程
+  const checkDuplicateEnrollment = async (courseId: string): Promise<boolean> => {
     try {
-      const response = await fetch(`/api/enrollments?studentId=${studentId}&courseId=${courseId}`);
+      // 后端会从 Token 中获取当前学生ID进行检查
+      const response = await fetch(`/api/enrollments/check-duplicate?courseId=${courseId}`);
       const result = await response.json();
       if (!result.success) {
         throw new Error(result.message || '检查选课记录失败');
       }
-      // 如果返回的数据中有记录，说明已经选过这门课了
-      return result.data && result.data.length > 0;
+      return result.isDuplicate;
     } catch (error) {
       console.error('检查重复选课失败:', error);
-      return false; // 出错时默认允许继续，避免阻塞用户操作
+      return false;
     }
   };
 
@@ -224,10 +200,7 @@ export function useEnrollmentFormModal(
     form.resetFields();
     setLoadingData(true);
     setFormModalVisible(true);
-    Promise.all([
-      fetchAvailableCourses(),
-      fetchAvailableStudents(),
-    ]).finally(() => {
+    fetchAvailableCourses().finally(() => {
       setLoadingData(false);
     });
   };
@@ -236,17 +209,13 @@ export function useEnrollmentFormModal(
   const handleEdit = (record: Enrollment) => {
     setEditingEnrollment(record);
     form.setFieldsValue({
-      studentId: record.studentId,
       courseId: record.courseId,
     });
 
     setLoadingData(true);
     setFormModalVisible(true);
 
-    Promise.all([
-      fetchAvailableCourses(),
-      fetchAvailableStudents(),
-    ]).then(() => {
+    fetchAvailableCourses().then(() => {
       const course = availableCourses.find(c => c._id === record.courseId);
       if (course) {
         setSelectedCourse(course);
@@ -268,9 +237,9 @@ export function useEnrollmentFormModal(
   const handleSubmit = async (values: EnrollmentFormData) => {
     // 仅在新增选课时检查重复
     if (!editingEnrollment) {
-      const isDuplicate = await checkDuplicateEnrollment(values.studentId, values.courseId);
+      const isDuplicate = await checkDuplicateEnrollment(values.courseId);
       if (isDuplicate) {
-        message.warning('该学生已经选择了此课程，不能重复选课！');
+        message.warning('您已经选择了此课程，不能重复选课！');
         return; // 阻止提交
       }
     }
@@ -330,27 +299,6 @@ export function useEnrollmentFormModal(
       style={{ marginTop: 24 }}
       autoComplete="off"
     >
-      {!editingEnrollment && (
-        <Form.Item
-          label="选择学生"
-          name="studentId"
-          rules={[{ required: true, message: '请选择学生' }]}
-        >
-          <Select
-            placeholder="请选择要选课的学生"
-            showSearch
-            optionFilterProp="label"
-            filterOption={(input, option) =>
-              String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-            }
-            options={availableStudents.map(student => ({
-              value: student.id,
-              label: `${student.id} - ${student.name} (${student.major})`,
-            }))}
-          />
-        </Form.Item>
-      )}
-
       <Form.Item
         label="选择课程"
         name="courseId"

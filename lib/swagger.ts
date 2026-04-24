@@ -35,7 +35,7 @@ export const getApiDocs = async () => {
   });
 
   // 手动补充接口文档（因为 next-swagger-doc 无法自动识别 Next.js 路由）
-  spec.paths = {
+  (spec as any).paths = {
     // ==================== 学生管理接口 ====================
     '/api/students': {
       get: {
@@ -469,8 +469,8 @@ export const getApiDocs = async () => {
   };
 
   // 定义数据模型
-  spec.components = spec.components || {};
-  spec.components.schemas = {
+  (spec as any).components = (spec as any).components || {};
+  (spec as any).components.schemas = {
     // ==================== 学生管理数据模型 ====================
     Student: {
       type: 'object',

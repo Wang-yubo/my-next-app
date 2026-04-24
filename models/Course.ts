@@ -163,7 +163,7 @@ const courseSchema = new Schema<ICourse>(
 courseSchema.index({ courseCode: 1 });
 courseSchema.index({ courseName: 1 });
 courseSchema.index({ status: 1 });
-courseSchema.index({ teacher: { name: 1 } });
+courseSchema.index({ 'teacher.name': 1 });
 
 const Course: Model<ICourse> =
   mongoose.models.Course || mongoose.model<ICourse>('Course', courseSchema);

@@ -5,7 +5,7 @@ import Course from '@/models/Course';
 // GET - 获取单个课程
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
@@ -36,7 +36,7 @@ export async function GET(
 // PUT - 更新课程
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
@@ -89,7 +89,7 @@ export async function PUT(
 // DELETE - 删除课程
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
