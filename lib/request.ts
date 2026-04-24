@@ -10,6 +10,10 @@ interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
   message?: string;
+  // 分页字段（可选）
+  total?: number;
+  page?: number;
+  pageSize?: number;
 }
 
 /**

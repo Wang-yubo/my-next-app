@@ -200,9 +200,9 @@ export function useEnrollmentFormModal(
     form.resetFields();
     setLoadingData(true);
     setFormModalVisible(true);
-    fetchAvailableCourses().finally(() => {
-      setLoadingData(false);
-    });
+    fetchAvailableCourses();
+    // useRequest 的 onSuccess/onError 会处理结果，这里不需要 finally
+    setTimeout(() => setLoadingData(false), 500);
   };
 
   // 打开编辑弹窗
@@ -215,14 +215,15 @@ export function useEnrollmentFormModal(
     setLoadingData(true);
     setFormModalVisible(true);
 
-    fetchAvailableCourses().then(() => {
+    fetchAvailableCourses();
+    // 延迟设置 loading 状态，等待数据加载
+    setTimeout(() => {
+      setLoadingData(false);
       const course = availableCourses.find(c => c._id === record.courseId);
       if (course) {
         setSelectedCourse(course);
       }
-    }).finally(() => {
-      setLoadingData(false);
-    });
+    }, 500);
   };
 
   // 关闭表单弹窗
@@ -263,7 +264,7 @@ export function useEnrollmentFormModal(
   const renderCourseCard = () => (
     <Card title="课程信息" style={{ marginTop: 16 }}>
       {loadingData ? (
-        <Spin tip="加载课程信息...">
+        <Spin description="加载课程信息...">
           <div style={{ minHeight: 120 }} />
         </Spin>
       ) : selectedCourse ? (

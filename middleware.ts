@@ -5,8 +5,8 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get('auth_token')?.value;
   const pathname = request.nextUrl.pathname;
 
-  // 保护 /dashboard 路径 - 未登录用户重定向到登录页
-  if (pathname.startsWith('/dashboard') && !token) {
+  // 保护 /dashboard 和 /profile 路径 - 未登录用户重定向到登录页
+  if ((pathname.startsWith('/dashboard') || pathname.startsWith('/profile')) && !token) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
@@ -19,5 +19,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/', '/register'],
+  matcher: ['/dashboard/:path*', '/profile/:path*', '/', '/register'],
 };

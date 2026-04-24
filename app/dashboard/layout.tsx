@@ -134,7 +134,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     {
       key: 'profile',
       icon: <UserOutlined />,
-      label: '个人资料',
+      label: (
+        <Link href="/profile" style={{ color: 'inherit' }}>
+          个人资料
+        </Link>
+      ),
     },
     {
       key: 'settings',

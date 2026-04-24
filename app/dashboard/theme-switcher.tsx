@@ -39,7 +39,7 @@ export default function ThemeSwitcher({ onThemeChange }: ThemeSwitcherProps) {
   };
 
   const content = (
-    <Space direction="vertical" size="middle" style={{ minWidth: 240 }}>
+    <Space orientation="vertical" size="middle" style={{ minWidth: 240 }}>
       <div>
         <Text strong>选择主题色</Text>
       </div>

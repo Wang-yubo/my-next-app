@@ -13,7 +13,9 @@ interface Student {
   gender: string;
   age: number;
   major: string;
+  className: string;
   grade: string;
+  idCard: string;
   phone: string;
   email: string;
   status: '在读' | '休学' | '毕业';

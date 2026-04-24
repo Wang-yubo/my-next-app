@@ -92,9 +92,9 @@ export default function EnrollmentsPage() {
         }));
 
         setPagination({
-          current: result.page,
-          pageSize: result.pageSize,
-          total: result.total,
+          current: result.page || 1,
+          pageSize: result.pageSize || 10,
+          total: result.total || 0,
         });
 
         return enrollments;
