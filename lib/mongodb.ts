@@ -30,11 +30,17 @@ export async function connectDB() {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
+      serverSelectionTimeoutMS: 10000, // 服务器选择超时 10 秒
+      socketTimeoutMS: 45000, // Socket 超时 45 秒
+      connectTimeoutMS: 10000, // 连接超时 10 秒
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
       console.log('✅ MongoDB 连接成功');
       return mongoose;
+    }).catch((error) => {
+      console.error(' MongoDB 连接失败:', error.message);
+      throw error;
     });
   }
 
