@@ -88,7 +88,6 @@ export default function StudentsPage() {
         const students = result.data.map((item: any) => ({
           ...item,
           key: item._id,
-          enrollDate: dayjs(item.enrollDate).format('YYYY-MM-DD'),
         }));
 
         setPagination({
