@@ -14,7 +14,6 @@ import {
   DashboardOutlined,
   TeamOutlined,
   SafetyOutlined,
-  MenuOutlined,
   ArrowLeftOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -37,22 +36,16 @@ const menuItems = [
     label: '用户管理',
   },
   {
-    key: '/admin/roles',
+    key: '/admin/permissions',
     icon: <SafetyOutlined />,
-    label: '角色管理',
-  },
-  {
-    key: '/admin/menus',
-    icon: <MenuOutlined />,
-    label: '菜单权限管理',
+    label: '权限管理',
   },
 ];
 
 function getSelectedKey(pathname: string): string {
   if (pathname === '/admin') return '/admin';
   if (pathname.startsWith('/admin/users')) return '/admin/users';
-  if (pathname.startsWith('/admin/roles')) return '/admin/roles';
-  if (pathname.startsWith('/admin/menus')) return '/admin/menus';
+  if (pathname.startsWith('/admin/permissions')) return '/admin/permissions';
   return '/admin';
 }
 
