@@ -6,7 +6,7 @@ const TOKEN_EXPIRY = '7d'; // 7天过期
 
 export interface JWTPayload {
   userId: string;
-  role: 'student' | 'teacher';
+  role: 'student' | 'teacher' | 'admin';
   email: string;
   name: string;
 }

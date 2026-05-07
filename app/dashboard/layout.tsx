@@ -121,6 +121,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         message.success('已退出登录');
         // 清除本地存储的用户信息
         localStorage.removeItem('user_info');
+        localStorage.removeItem('user_permissions');
         router.push('/');
       }
     } catch (error) {

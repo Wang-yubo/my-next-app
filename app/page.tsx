@@ -1,14 +1,13 @@
 'use client';
 
 import { Button, Input, Form, Checkbox, message } from 'antd';
-import { ArrowRightOutlined, UserOutlined, LockOutlined, ScanOutlined } from '@ant-design/icons';
+import { UserOutlined, LockOutlined, ScanOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [role, setRole] = useState<'student' | 'teacher'>('student');
 
   const handleLogin = async (values: any) => {
     setLoading(true);
@@ -21,7 +20,6 @@ export default function LoginPage() {
         body: JSON.stringify({
           username: values.username,
           password: values.password,
-          role: role,
         }),
       });
 
@@ -29,8 +27,10 @@ export default function LoginPage() {
 
       if (result.success) {
         message.success('登录成功！');
-        // 保存用户信息到 localStorage
         localStorage.setItem('user_info', JSON.stringify(result.data.user));
+        if (result.data.permissions) {
+          localStorage.setItem('user_permissions', JSON.stringify(result.data.permissions));
+        }
         router.push('/dashboard');
       } else {
         message.error(result.message || '登录失败');
@@ -269,64 +269,6 @@ export default function LoginPage() {
             size="large"
             autoComplete="off"
           >
-            {/* 角色选择 */}
-            <div
-              style={{
-                display: 'flex',
-                gap: '12px',
-                marginBottom: '20px',
-              }}
-            >
-              <Button
-                block
-                onClick={() => setRole('student')}
-                style={{
-                  height: '44px',
-                  fontSize: '15px',
-                  fontWeight: '600',
-                  borderRadius: '10px',
-                  background: role === 'student' 
-                    ? 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)'
-                    : 'rgba(30, 41, 59, 0.5)',
-                  border: role === 'student' 
-                    ? 'none'
-                    : '1px solid rgba(59, 130, 246, 0.2)',
-                  color: role === 'student' ? '#fff' : 'rgba(148, 163, 184, 0.8)',
-                  boxShadow: role === 'student' 
-                    ? '0 4px 15px rgba(59, 130, 246, 0.4)'
-                    : 'none',
-                  transition: 'all 0.3s ease',
-                  letterSpacing: '2px',
-                }}
-              >
-                👨‍🎓 学生
-              </Button>
-              <Button
-                block
-                onClick={() => setRole('teacher')}
-                style={{
-                  height: '44px',
-                  fontSize: '15px',
-                  fontWeight: '600',
-                  borderRadius: '10px',
-                  background: role === 'teacher' 
-                    ? 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)'
-                    : 'rgba(30, 41, 59, 0.5)',
-                  border: role === 'teacher' 
-                    ? 'none'
-                    : '1px solid rgba(59, 130, 246, 0.2)',
-                  color: role === 'teacher' ? '#fff' : 'rgba(148, 163, 184, 0.8)',
-                  boxShadow: role === 'teacher' 
-                    ? '0 4px 15px rgba(59, 130, 246, 0.4)'
-                    : 'none',
-                  transition: 'all 0.3s ease',
-                  letterSpacing: '2px',
-                }}
-              >
-                👨‍🏫 教师
-              </Button>
-            </div>
-
             <Form.Item
               name="username"
               rules={[{ required: true, message: '请输入用户名!' }]}

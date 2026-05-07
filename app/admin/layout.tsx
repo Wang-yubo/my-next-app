@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Layout,
   Menu,
@@ -9,6 +9,7 @@ import {
   App,
   Button,
   Space,
+  Result,
 } from 'antd';
 import {
   DashboardOutlined,
@@ -29,16 +30,19 @@ const menuItems = [
     key: '/admin',
     icon: <DashboardOutlined />,
     label: '系统总览',
+    permission: 'admin:dashboard',
   },
   {
     key: '/admin/users',
     icon: <TeamOutlined />,
     label: '用户管理',
+    permission: 'admin:users',
   },
   {
     key: '/admin/permissions',
     icon: <SafetyOutlined />,
     label: '权限管理',
+    permission: 'admin:permissions',
   },
 ];
 
@@ -55,11 +59,34 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
+  const [permissions, setPermissions] = useState<string[] | null>(null);
   const {
     token: { colorBgContainer, borderRadiusLG, colorText, colorBorderSecondary },
   } = theme.useToken();
   const pathname = usePathname();
   const router = useRouter();
+
+  useEffect(() => {
+    const savedPermissions = localStorage.getItem('user_permissions');
+    if (savedPermissions) {
+      setPermissions(JSON.parse(savedPermissions));
+    } else {
+      setPermissions([]);
+    }
+  }, []);
+
+  const hasPermission = (required: string): boolean => {
+    if (permissions === null) return true;
+    if (permissions.length === 0) return true;
+    return permissions.includes(required);
+  };
+
+  const filteredMenuItems = useMemo(() => {
+    return menuItems.filter((item) => hasPermission(item.permission));
+  }, [permissions]);
+
+  const currentItem = menuItems.find((item) => item.key === getSelectedKey(pathname));
+  const isAllowed = currentItem ? hasPermission(currentItem.permission) : true;
 
   return (
     <ConfigProvider
@@ -108,7 +135,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           <Menu
             mode="inline"
             selectedKeys={[getSelectedKey(pathname)]}
-            items={menuItems.map((item) => ({
+            items={filteredMenuItems.map((item) => ({
               ...item,
               label: <Link href={item.key}>{item.label}</Link>,
             }))}
@@ -155,7 +182,20 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               borderRadius: borderRadiusLG,
             }}
           >
-            {children}
+            {isAllowed ? (
+              children
+            ) : (
+              <Result
+                status="403"
+                title="权限不足"
+                subTitle="您没有访问此页面的权限，请联系管理员"
+                extra={
+                  <Button type="primary" onClick={() => router.push('/admin')}>
+                    返回系统总览
+                  </Button>
+                }
+              />
+            )}
           </Content>
         </Layout>
       </Layout></App>

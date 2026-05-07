@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
+import AdminUser from '@/models/AdminUser';
+import '@/models/Role';
 import Student from '@/models/Student';
 import Teacher from '@/models/Teacher';
 import bcrypt from 'bcryptjs';
@@ -8,46 +10,115 @@ import { generateToken, setAuthCookie } from '@/lib/auth';
 export async function POST(request: NextRequest) {
   try {
     await connectDB();
-    
-    const { username, password, role } = await request.json();
 
-    // 验证必填字段
-    if (!username || !password || !role) {
+    const { username, password } = await request.json();
+
+    if (!username || !password) {
       return NextResponse.json(
-        { success: false, message: '请填写所有必填字段' },
+        { success: false, message: '请输入用户名和密码' },
         { status: 400 } as any
       );
     }
 
-    if (!['student', 'teacher'].includes(role)) {
-      return NextResponse.json(
-        { success: false, message: '无效的角色类型' },
-        { status: 400 } as any
-      );
-    }
+    let user: any = null;
+    let role: string = '';
+    let name: string = '';
+    let userId: string = '';
+    let permissions: string[] = [];
 
-    // 查找用户（支持学号/工号或邮箱登录）
-    let user;
-    if (role === 'student') {
-      user = await Student.findOne({ 
-        $or: [{ email: username }, { id: username }] 
-      });
-    } else {
-      user = await Teacher.findOne({ 
-        $or: [{ email: username }, { id: username }] 
-      });
-    }
+    const adminUser = await AdminUser.findOne({
+      $or: [{ username }, { email: username }],
+    }).populate('roles', 'permissions');
 
-    console.log('登录调试信息:', {
+    console.log('登录查询 AdminUser:', {
       username,
-      role,
-      userFound: !!user,
-      userName: user?.name,
-      userEmail: user?.email,
-      hasPassword: !!user?.password,
-      passwordType: typeof user?.password,
-      passwordLength: user?.password?.length || 0
+      found: !!adminUser,
+      adminUsername: adminUser?.username,
     });
+
+    if (adminUser) {
+      const isPasswordValid = await bcrypt.compare(password, adminUser.password);
+      console.log('AdminUser 密码验证:', { valid: isPasswordValid });
+
+      if (!isPasswordValid) {
+        return NextResponse.json(
+          { success: false, message: '用户名或密码错误' },
+          { status: 401 } as any
+        );
+      }
+
+      if (adminUser.status === 'disabled') {
+        return NextResponse.json(
+          { success: false, message: '该账户已被禁用，无法登录' },
+          { status: 403 } as any
+        );
+      }
+
+      user = adminUser;
+      role = 'admin';
+      name = adminUser.nickname || adminUser.username;
+      userId = adminUser._id.toString();
+
+      if (adminUser.roles && adminUser.roles.length > 0) {
+        for (const r of adminUser.roles) {
+          if ((r as any).permissions) {
+            permissions.push(...(r as any).permissions);
+          }
+        }
+      }
+    } else {
+      const student = await Student.findOne({
+        $or: [{ email: username }, { id: username }],
+      });
+
+      if (student) {
+        const isPasswordValid = await bcrypt.compare(password, student.password);
+        if (!isPasswordValid) {
+          return NextResponse.json(
+            { success: false, message: '用户名或密码错误' },
+            { status: 401 } as any
+          );
+        }
+
+        if (student.status !== '在读') {
+          return NextResponse.json(
+            { success: false, message: '该账户已被禁用，无法登录' },
+            { status: 403 } as any
+          );
+        }
+
+        user = student;
+        role = 'student';
+        name = student.name;
+        userId = student.id;
+      } else {
+        const teacher = await Teacher.findOne({
+          $or: [{ email: username }, { id: username }],
+        });
+
+        if (teacher) {
+          const isPasswordValid = await bcrypt.compare(password, teacher.password);
+          if (!isPasswordValid) {
+            return NextResponse.json(
+              { success: false, message: '用户名或密码错误' },
+              { status: 401 } as any
+            );
+          }
+
+          if (teacher.status === '离职') {
+            return NextResponse.json(
+              { success: false, message: '该账户已被禁用，无法登录' },
+              { status: 403 } as any
+            );
+          }
+
+          user = teacher;
+          role = 'teacher';
+          name = teacher.name;
+          userId = teacher.id;
+        }
+      }
+    }
 
     if (!user) {
       return NextResponse.json(
@@ -56,51 +127,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 检查用户是否被禁用
-    if (role === 'student' && user.status !== '在读') {
-      return NextResponse.json(
-        { success: false, message: '该账户已被禁用，无法登录' },
-        { status: 403 } as any
-      );
-    }
-    if (role === 'teacher' && user.status === '离职') {
-      return NextResponse.json(
-        { success: false, message: '该账户已被禁用，无法登录' },
-        { status: 403 } as any
-      );
-    }
-
-    // 检查用户是否有密码
     if (!user.password) {
-      console.error(`用户 ${user.email} 没有设置密码`, {
-        passwordValue: user.password,
-        passwordType: typeof user.password,
-        userKeys: Object.keys(user.toObject ? user.toObject() : user)
-      });
       return NextResponse.json(
         { success: false, message: '该账户未设置密码，请联系管理员' },
         { status: 401 } as any
       );
     }
 
-    // 验证密码（使用 bcrypt 对比）
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return NextResponse.json(
-        { success: false, message: '用户名或密码错误' },
-        { status: 401 } as any
-      );
-    }
-
-    // 生成 JWT Token
     const token = await generateToken({
-      userId: user.id,
-      role: role,
+      userId,
+      role: role as 'student' | 'teacher' | 'admin',
       email: user.email,
-      name: user.name,
+      name,
     });
 
-    // 设置 HttpOnly Cookie
     await setAuthCookie(token);
 
     return NextResponse.json({
@@ -108,11 +148,12 @@ export async function POST(request: NextRequest) {
       message: '登录成功',
       data: {
         user: {
-          id: user.id,
-          name: user.name,
+          id: userId,
+          name,
           email: user.email,
-          role: role,
+          role,
         },
+        permissions: role === 'admin' ? permissions : [],
       },
     });
   } catch (error: any) {
