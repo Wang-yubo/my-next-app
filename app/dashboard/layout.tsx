@@ -143,7 +143,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     {
       key: 'settings',
       icon: <SettingOutlined />,
-      label: '系统设置',
+      label: (
+        <Link href="/admin" style={{ color: 'inherit' }}>
+          系统设置
+        </Link>
+      ),
     },
     {
       type: 'divider',
