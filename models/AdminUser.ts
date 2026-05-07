@@ -8,6 +8,8 @@ export interface IAdminUser {
   avatar: string;
   status: 'active' | 'disabled';
   roles: mongoose.Types.ObjectId[];
+  roleName: string;
+  roleCode: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -46,6 +48,14 @@ const adminUserSchema = new Schema<IAdminUser>(
         ref: 'Role',
       },
     ],
+    roleName: {
+      type: String,
+      default: '',
+    },
+    roleCode: {
+      type: String,
+      default: '',
+    },
   },
   {
     timestamps: true,

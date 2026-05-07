@@ -56,6 +56,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 检查用户是否被禁用
+    if (role === 'student' && user.status !== '在读') {
+      return NextResponse.json(
+        { success: false, message: '该账户已被禁用，无法登录' },
+        { status: 403 } as any
+      );
+    }
+    if (role === 'teacher' && user.status === '离职') {
+      return NextResponse.json(
+        { success: false, message: '该账户已被禁用，无法登录' },
+        { status: 403 } as any
+      );
+    }
+
     // 检查用户是否有密码
     if (!user.password) {
       console.error(`用户 ${user.email} 没有设置密码`, {

@@ -6,6 +6,7 @@ import {
   Menu,
   theme,
   ConfigProvider,
+  App,
   Button,
   Space,
 } from 'antd';
@@ -75,7 +76,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         },
       }}
     >
-      <Layout style={{ minHeight: '100vh' }}>
+      <App><Layout style={{ minHeight: '100vh' }}>
         <Sider
           collapsible
           collapsed={collapsed}
@@ -164,7 +165,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             {children}
           </Content>
         </Layout>
-      </Layout>
+      </Layout></App>
     </ConfigProvider>
   );
 }
