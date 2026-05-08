@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import AdminUser from '@/models/AdminUser';
 import '@/models/Role';
+import Role from '@/models/Role';
 import Student from '@/models/Student';
 import Teacher from '@/models/Teacher';
 import bcrypt from 'bcryptjs';
@@ -30,16 +31,8 @@ export async function POST(request: NextRequest) {
       $or: [{ username }, { email: username }],
     }).populate('roles', 'permissions');
 
-    console.log('登录查询 AdminUser:', {
-      username,
-      found: !!adminUser,
-      adminUsername: adminUser?.username,
-    });
-
     if (adminUser) {
       const isPasswordValid = await bcrypt.compare(password, adminUser.password);
-      console.log('AdminUser 密码验证:', { valid: isPasswordValid });
-
       if (!isPasswordValid) {
         return NextResponse.json(
           { success: false, message: '用户名或密码错误' },
@@ -91,6 +84,11 @@ export async function POST(request: NextRequest) {
         role = 'student';
         name = student.name;
         userId = student.id;
+
+        const studentRole = await Role.findOne({ code: 'student' }).lean();
+        if (studentRole) {
+          permissions = (studentRole as any).permissions || [];
+        }
       } else {
         const teacher = await Teacher.findOne({
           $or: [{ email: username }, { id: username }],
@@ -116,6 +114,11 @@ export async function POST(request: NextRequest) {
           role = 'teacher';
           name = teacher.name;
           userId = teacher.id;
+
+          const teacherRole = await Role.findOne({ code: 'teacher' }).lean();
+          if (teacherRole) {
+            permissions = (teacherRole as any).permissions || [];
+          }
         }
       }
     }
@@ -153,7 +156,7 @@ export async function POST(request: NextRequest) {
           email: user.email,
           role,
         },
-        permissions: role === 'admin' ? permissions : [],
+        permissions,
       },
     });
   } catch (error: any) {

@@ -41,6 +41,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [primaryColor, setPrimaryColor] = useState('#1677ff');
   const [isClient, setIsClient] = useState(false);
   const [userInfo, setUserInfo] = useState<{ name: string; role: string } | null>(null);
+  const [permissions, setPermissions] = useState<string[] | null>(null);
   const {
     token: { colorBgContainer, borderRadiusLG, colorText, colorBorderSecondary, colorTextSecondary },
   } = theme.useToken();
@@ -61,6 +62,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     if (savedUserInfo) {
       setUserInfo(JSON.parse(savedUserInfo));
     }
+
+    const savedPermissions = localStorage.getItem('user_permissions');
+    if (savedPermissions) {
+      setPermissions(JSON.parse(savedPermissions));
+    } else {
+      setPermissions([]);
+    }
   }, []);
 
   // 处理主题色变化
@@ -69,26 +77,30 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   // 菜单配置 - 统一管理路由和标题
-  const menuItems: MenuProps['items'] = [
+  const allMenuItems = [
     {
       key: '/dashboard',
       icon: <DashboardOutlined />,
       label: '仪表盘',
+      permission: 'dashboard',
     },
     {
       key: '/dashboard/students',
       icon: <TeamOutlined />,
       label: '学生管理',
+      permission: 'student:list',
     },
     {
       key: '/dashboard/courses',
       icon: <BookOutlined />,
       label: '课程管理',
+      permission: 'course:list',
     },
     {
       key: '/dashboard/enrollments',
       icon: <ScheduleOutlined />,
       label: '选课管理',
+      permission: 'enrollment:list',
     },
     {
       type: 'divider',
@@ -97,15 +109,24 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       key: '/api-doc',
       icon: <ApiOutlined />,
       label: 'API 文档',
+      permission: 'api:doc',
     },
   ];
 
+  const getMenuItems = () => {
+    if (permissions === null || permissions.length === 0) return allMenuItems;
+    return allMenuItems.filter((item: any) => {
+      if (item.type === 'divider') return true;
+      return item.permission ? permissions.includes(item.permission) : true;
+    });
+  };
+
   // 根据当前路径获取面包屑标题
   const getBreadcrumbTitle = () => {
-    const currentItem = menuItems.find((item): item is { key: string; label: React.ReactNode } => 
-      item !== null && item.type !== 'divider' && (item as any).key === pathname
+    const currentItem = allMenuItems.find(
+      (item: any) => item && item.type !== 'divider' && item.key === pathname
     );
-    return (currentItem as any)?.label || '未知';
+    return currentItem?.label || '未知';
   };
 
   // 处理退出登录
@@ -216,7 +237,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <Menu
           mode="inline"
           selectedKeys={[pathname]}
-          items={menuItems.map((item) => {
+          items={getMenuItems().map((item: any) => {
             if (item?.type === 'divider') {
               return item;
             }
