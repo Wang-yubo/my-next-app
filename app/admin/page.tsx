@@ -5,8 +5,8 @@ import { Card, Row, Col, Descriptions, Tag, Typography, Space } from 'antd';
 import {
   TeamOutlined,
   SafetyOutlined,
-  MenuOutlined,
   CompassOutlined,
+  MonitorOutlined,
 } from '@ant-design/icons';
 import Link from 'next/link';
 
@@ -15,28 +15,28 @@ const { Text } = Typography;
 const modules = [
   {
     title: '用户管理',
-    description: '管理系统中的所有用户账号，支持创建、编辑、启用/禁用、重置密码以及为用户分配角色等操作。',
+    description: '管理系统中的所有用户账号，支持创建、编辑、启用/禁用、重置密码等操作。',
     icon: <TeamOutlined style={{ fontSize: 32, color: '#1677ff' }} />,
     color: '#e6f4ff',
     href: '/admin/users',
   },
   {
-    title: '角色管理',
-    description: '定义系统角色（如超级管理员、教务管理员等），并为每个角色分配菜单和按钮级别的访问权限。',
+    title: '权限管理',
+    description: '管理角色和菜单权限，创建角色并为每个角色分配页面级别的访问权限。',
     icon: <SafetyOutlined style={{ fontSize: 32, color: '#52c41a' }} />,
     color: '#f6ffed',
-    href: '/admin/roles',
+    href: '/admin/permissions',
   },
   {
-    title: '菜单权限管理',
-    description: '配置系统侧边栏菜单结构，支持无限层级嵌套，每个菜单项可绑定唯一的权限标识供角色分配使用。',
-    icon: <MenuOutlined style={{ fontSize: 32, color: '#722ed1' }} />,
+    title: '系统监控',
+    description: '监控系统运行状态，查看服务器资源使用情况和系统日志（功能开发中）。',
+    icon: <MonitorOutlined style={{ fontSize: 32, color: '#722ed1' }} />,
     color: '#f9f0ff',
-    href: '/admin/menus',
+    href: undefined,
   },
   {
     title: '使用引导',
-    description: '本系统采用 RBAC 权限模型，建议按照「菜单权限 → 角色 → 用户」的顺序进行初始配置。',
+    description: '本系统采用 RBAC 权限模型，建议按照「权限管理 → 用户」的顺序进行初始配置。',
     icon: <CompassOutlined style={{ fontSize: 32, color: '#faad14' }} />,
     color: '#fffbe6',
     href: undefined,
@@ -46,20 +46,14 @@ const modules = [
 const rbacSteps = [
   {
     step: 1,
-    title: '配置菜单权限',
-    desc: '在「菜单权限管理」中定义系统的菜单结构和按钮权限，每个菜单项绑定唯一的权限标识。',
-    link: '/admin/menus',
+    title: '配置角色与权限',
+    desc: '在「权限管理」中创建角色（如：超级管理员、教务管理员），并通过树形选择器勾选对应的页面权限。',
+    link: '/admin/permissions',
   },
   {
     step: 2,
-    title: '创建角色并分配权限',
-    desc: '在「角色管理」中创建角色（如：超级管理员、教务管理员），并通过树形选择器勾选对应的菜单权限。',
-    link: '/admin/roles',
-  },
-  {
-    step: 3,
     title: '创建用户并关联角色',
-    desc: '在「用户管理」中创建系统用户，填写基本信息并选择一个或多个角色，用户即获得对应角色的所有权限。',
+    desc: '在「用户管理」中创建系统用户，填写基本信息并选择一个角色，用户即获得该角色的所有页面访问权限。',
     link: '/admin/users',
   },
 ];

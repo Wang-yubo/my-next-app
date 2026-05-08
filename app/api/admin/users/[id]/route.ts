@@ -1,19 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import AdminUser from '@/models/AdminUser';
+import Role from '@/models/Role';
 import bcrypt from 'bcryptjs';
 
-const mockRoleMap: Record<string, { name: string; code: string }> = {
-  '000000000000000000000001': { name: '超级管理员', code: 'super_admin' },
-  '000000000000000000000002': { name: '教务管理员', code: 'edu_admin' },
-  '000000000000000000000003': { name: '教师', code: 'teacher' },
-  '000000000000000000000004': { name: '学生', code: 'student' },
-};
-
-function resolveRoleInfo(roleId: string): { name: string; code: string } {
-  const mapped = mockRoleMap[roleId];
-  if (mapped) return mapped;
+async function resolveRoleInfoFromDb(roleId: string): Promise<{ name: string; code: string }> {
+  if (!roleId) return { name: '学生', code: 'student' };
+  try {
+    const role = await Role.findById(roleId).lean();
+    if (role) return { name: role.name, code: role.code };
+  } catch {}
   return { name: '学生', code: 'student' };
+}
+
+async function findRoleByCode(code: string): Promise<{ _id: string; name: string; code: string } | null> {
+  if (!code) return null;
+  try {
+    const role = await Role.findOne({ code }).lean();
+    if (role) return { _id: role._id.toString(), name: role.name, code: role.code };
+  } catch {}
+  return null;
 }
 
 export async function GET(
@@ -33,19 +39,31 @@ export async function GET(
       );
     }
 
-    const roles = user.roleName
-      ? [{ _id: (user.roles?.[0]?.toString?.() || user.roles?.[0] || ''), name: user.roleName, code: user.roleCode }]
-      : user.roles?.map((r: any) => {
-          const id = r?.toString?.() || r;
-          const mapped = mockRoleMap[id];
-          return mapped ? { _id: id, name: mapped.name, code: mapped.code } : null;
-        }).filter(Boolean) || [];
+    // 用真实角色 ID 替换角色信息
+    let resolvedRoles: { _id: string; name: string; code: string }[] = [];
+    if (user.roleName) {
+      const found = await findRoleByCode(user.roleCode);
+      if (found) {
+        resolvedRoles = [found];
+      } else {
+        resolvedRoles = [{ _id: '', name: user.roleName, code: user.roleCode }];
+      }
+    } else {
+      resolvedRoles = [];
+      for (const r of (user.roles || [])) {
+        const id = r?.toString?.() || r;
+        const found = await Role.findById(id).lean().catch(() => null);
+        if (found) {
+          resolvedRoles.push({ _id: found._id.toString(), name: found.name, code: found.code });
+        }
+      }
+    }
 
     return NextResponse.json({
       success: true,
       data: {
         ...user,
-        roles,
+        roles: resolvedRoles,
       },
     });
   } catch (error) {
@@ -74,7 +92,7 @@ export async function PUT(
     };
 
     if (body.role) {
-      const { name: roleName, code: roleCode } = resolveRoleInfo(body.role);
+      const { name: roleName, code: roleCode } = await resolveRoleInfoFromDb(body.role);
       updateData.roles = [body.role];
       updateData.roleName = roleName;
       updateData.roleCode = roleCode;

@@ -40,11 +40,6 @@ interface UseUserFormModalReturn {
   handleResetPw: (record: { _id: string; username?: string; displayName?: string }) => void;
 }
 
-const mockRoles = [
-  { _id: '000000000000000000000001', name: '超级管理员', code: 'super_admin' },
-  { _id: '000000000000000000000002', name: '教务管理员', code: 'edu_admin' },
-];
-
 export function useUserFormModal(
   pagination: { current: number; pageSize: number; total: number },
   searchText: string,
@@ -57,6 +52,21 @@ export function useUserFormModal(
   const [resetPwTarget, setResetPwTarget] = React.useState<{ _id: string; name: string } | null>(null);
   const [form] = Form.useForm<any>();
   const [resetPwForm] = Form.useForm();
+
+  const { data: rolesData } = useRequest(
+    async () => {
+      const result = await get('/api/admin/roles', { params: { page: 1, pageSize: 100 } });
+      return result.data as RoleInfo[];
+    },
+    { manual: false, defaultParams: [] }
+  );
+
+  const roleOptions = (rolesData || [])
+    .filter((r: RoleInfo) => r.code !== 'teacher' && r.code !== 'student')
+    .map((r: RoleInfo) => ({
+      label: r.name,
+      value: r._id,
+    }));
 
   const { run: createUser, loading: createLoading } = useRequest(
     async (data: UserFormData) => {
@@ -249,10 +259,7 @@ export function useUserFormModal(
       >
         <Select
           placeholder="请选择角色"
-          options={mockRoles.map((r) => ({
-            label: r.name,
-            value: r._id,
-          }))}
+          options={roleOptions}
         />
       </Form.Item>
 

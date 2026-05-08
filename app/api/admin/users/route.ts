@@ -3,7 +3,7 @@ import { connectDB } from '@/lib/mongodb';
 import AdminUser from '@/models/AdminUser';
 import Teacher from '@/models/Teacher';
 import Student from '@/models/Student';
-import '@/models/Role';
+import Role from '@/models/Role';
 import bcrypt from 'bcryptjs';
 
 const roleOrder: Record<string, number> = {
@@ -13,16 +13,12 @@ const roleOrder: Record<string, number> = {
   student: 4,
 };
 
-const mockRoleMap: Record<string, { name: string; code: string }> = {
-  '000000000000000000000001': { name: '超级管理员', code: 'super_admin' },
-  '000000000000000000000002': { name: '教务管理员', code: 'edu_admin' },
-  '000000000000000000000003': { name: '教师', code: 'teacher' },
-  '000000000000000000000004': { name: '学生', code: 'student' },
-};
-
-function resolveRoleInfo(roleId: string): { name: string; code: string } {
-  const mapped = mockRoleMap[roleId];
-  if (mapped) return mapped;
+async function resolveRoleInfoFromDb(roleId: string): Promise<{ name: string; code: string }> {
+  if (!roleId) return { name: '学生', code: 'student' };
+  try {
+    const role = await Role.findById(roleId).lean();
+    if (role) return { name: role.name, code: role.code };
+  } catch {}
   return { name: '学生', code: 'student' };
 }
 
@@ -45,9 +41,8 @@ async function queryAdminUsers(search: string) {
 
     if (!roleName || !roleCode) {
       const roleId = u.roles?.[0]?.toString?.() || u.roles?.[0] || '';
-      const resolved = resolveRoleInfo(roleId);
-      roleName = resolved.name;
-      roleCode = resolved.code;
+      roleCode = 'student';
+      roleName = '学生';
     }
 
     return {
@@ -163,8 +158,8 @@ export async function POST(request: NextRequest) {
 
     const hashedPassword = await bcrypt.hash(body.password, 10);
 
-    const roleId = body.role || (body.roles?.[0]) || '';
-    const { name: roleName, code: roleCode } = resolveRoleInfo(roleId);
+    const roleId = body.role || '';
+    const { name: roleName, code: roleCode } = await resolveRoleInfoFromDb(roleId);
 
     const user = await AdminUser.create({
       username: body.username,
