@@ -56,6 +56,7 @@ const mockMenus: MenuNode[] = [
       { key: 'admin:dashboard', title: '系统总览', permission: 'admin:dashboard' },
       { key: 'admin:users', title: '用户管理', permission: 'admin:users' },
       { key: 'admin:permissions', title: '权限管理', permission: 'admin:permissions' },
+      { key: 'admin:monitor', title: '系统监控', permission: 'admin:monitor' },
     ],
   },
   {

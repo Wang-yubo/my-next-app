@@ -19,7 +19,7 @@ const roles = [
     code: 'edu_admin',
     description: '负责教务相关管理，可管理用户、角色和权限',
     status: 'active',
-    permissions: [],
+    permissions: ['admin:dashboard', 'admin:users', 'admin:permissions', 'admin:monitor'],
     sort: 2,
   },
   {

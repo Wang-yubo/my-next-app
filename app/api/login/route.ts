@@ -5,6 +5,7 @@ import '@/models/Role';
 import Role from '@/models/Role';
 import Student from '@/models/Student';
 import Teacher from '@/models/Teacher';
+import ActivityLog from '@/models/ActivityLog';
 import bcrypt from 'bcryptjs';
 import { generateToken, setAuthCookie } from '@/lib/auth';
 
@@ -145,6 +146,19 @@ export async function POST(request: NextRequest) {
     });
 
     await setAuthCookie(token);
+
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || 'unknown';
+    const userAgent = request.headers.get('user-agent') || '';
+
+    await ActivityLog.create({
+      userId,
+      username: name,
+      name,
+      role,
+      action: 'login',
+      ip,
+      userAgent,
+    });
 
     return NextResponse.json({
       success: true,

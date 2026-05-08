@@ -29,10 +29,10 @@ const modules = [
   },
   {
     title: '系统监控',
-    description: '监控系统运行状态，查看服务器资源使用情况和系统日志（功能开发中）。',
+    description: '监控系统用户活动，追踪登录/登出记录，查看操作日志详情。',
     icon: <MonitorOutlined style={{ fontSize: 32, color: '#722ed1' }} />,
     color: '#f9f0ff',
-    href: undefined,
+    href: '/admin/monitor',
   },
   {
     title: '使用引导',

@@ -15,6 +15,7 @@ import {
   DashboardOutlined,
   TeamOutlined,
   SafetyOutlined,
+  MonitorOutlined,
   ArrowLeftOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -44,12 +45,19 @@ const menuItems = [
     label: '权限管理',
     permission: 'admin:permissions',
   },
+  {
+    key: '/admin/monitor',
+    icon: <MonitorOutlined />,
+    label: '系统监控',
+    permission: 'admin:monitor',
+  },
 ];
 
 function getSelectedKey(pathname: string): string {
   if (pathname === '/admin') return '/admin';
   if (pathname.startsWith('/admin/users')) return '/admin/users';
   if (pathname.startsWith('/admin/permissions')) return '/admin/permissions';
+  if (pathname.startsWith('/admin/monitor')) return '/admin/monitor';
   return '/admin';
 }
 
