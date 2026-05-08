@@ -14,12 +14,12 @@ const roleOrder: Record<string, number> = {
 };
 
 async function resolveRoleInfoFromDb(roleId: string): Promise<{ name: string; code: string }> {
-  if (!roleId) return { name: '学生', code: 'student' };
+  if (!roleId) return { name: '未知', code: '' };
   try {
     const role = await Role.findById(roleId).lean();
     if (role) return { name: role.name, code: role.code };
   } catch {}
-  return { name: '学生', code: 'student' };
+  return { name: '未知', code: '' };
 }
 
 async function queryAdminUsers(search: string) {
@@ -35,14 +35,15 @@ async function queryAdminUsers(search: string) {
     .sort({ createdAt: -1 })
     .lean();
 
-  return users.map((u: any) => {
+  return Promise.all(users.map(async (u: any) => {
     let roleName = u.roleName;
     let roleCode = u.roleCode;
 
     if (!roleName || !roleCode) {
       const roleId = u.roles?.[0]?.toString?.() || u.roles?.[0] || '';
-      roleCode = 'student';
-      roleName = '学生';
+      const resolved = await resolveRoleInfoFromDb(roleId);
+      roleName = resolved.name;
+      roleCode = resolved.code;
     }
 
     return {
@@ -59,7 +60,7 @@ async function queryAdminUsers(search: string) {
       createdAt: u.createdAt,
       updatedAt: u.updatedAt,
     };
-  });
+  }));
 }
 
 async function queryTeachers(search: string) {

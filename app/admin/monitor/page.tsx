@@ -5,20 +5,18 @@ import {
   Card,
   Row,
   Col,
-  Statistic,
   Table,
   Tag,
-  Space,
   Select,
   Input,
-  theme,
 } from 'antd';
 import {
   LoginOutlined,
   LogoutOutlined,
   ClockCircleOutlined,
   AuditOutlined,
-  SearchOutlined,
+  RiseOutlined,
+  TeamOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { useRequest } from 'ahooks';
@@ -45,8 +43,47 @@ const roleColorMap: Record<string, string> = {
   student: 'default',
 };
 
+const statCards = [
+  {
+    key: 'todayLogin',
+    title: '今日登录',
+    value: 0,
+    icon: <LoginOutlined />,
+    gradient: 'linear-gradient(135deg, #52c41a 0%, #237804 100%)',
+    shadow: '0 8px 24px rgba(82, 196, 26, 0.25)',
+    suffix: '次',
+  },
+  {
+    key: 'todayLogout',
+    title: '今日登出',
+    value: 0,
+    icon: <LogoutOutlined />,
+    gradient: 'linear-gradient(135deg, #faad14 0%, #d48806 100%)',
+    shadow: '0 8px 24px rgba(250, 173, 20, 0.25)',
+    suffix: '次',
+  },
+  {
+    key: 'totalLogs',
+    title: '历史记录',
+    value: 0,
+    icon: <AuditOutlined />,
+    gradient: 'linear-gradient(135deg, #1677ff 0%, #0958d9 100%)',
+    shadow: '0 8px 24px rgba(22, 119, 255, 0.25)',
+    suffix: '条',
+  },
+  {
+    key: 'lastLoginTime',
+    title: '最近登录',
+    value: '-',
+    icon: <ClockCircleOutlined />,
+    gradient: 'linear-gradient(135deg, #722ed1 0%, #531dab 100%)',
+    shadow: '0 8px 24px rgba(114, 46, 209, 0.25)',
+    suffix: '',
+    extra: '',
+  },
+];
+
 export default function MonitorPage() {
-  const { token } = theme.useToken();
   const [searchText, setSearchText] = useState('');
   const [actionFilter, setActionFilter] = useState<string>('');
   const [pagination, setPagination] = useState({
@@ -167,76 +204,199 @@ export default function MonitorPage() {
     },
   ];
 
+  const getCardValue = (key: string, card: typeof statCards[0]) => {
+    if (key === 'todayLogin') return statsData?.todayLogin ?? 0;
+    if (key === 'todayLogout') return statsData?.todayLogout ?? 0;
+    if (key === 'totalLogs') return statsData?.totalLogs ?? 0;
+    if (key === 'lastLoginTime') {
+      if (!statsData?.lastLoginAt) return '-';
+      return dayjs(statsData.lastLoginAt).format('HH:mm:ss');
+    }
+    return card.value;
+  };
+
   return (
     <div>
       <h1 style={{ marginBottom: 24, fontSize: 24, fontWeight: 600 }}>
         系统监控
       </h1>
 
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={12} lg={6}>
-          <Card hoverable styles={{ body: { padding: '24px 16px' } }}>
-            <Statistic
-              title={
-                <Space>
-                  <LoginOutlined style={{ color: '#52c41a' }} />
-                  <span>今日登录</span>
-                </Space>
-              }
-              value={statsData?.todayLogin || 0}
-              valueStyle={{ color: '#52c41a', fontSize: 28 }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card hoverable styles={{ body: { padding: '24px 16px' } }}>
-            <Statistic
-              title={
-                <Space>
-                  <LogoutOutlined style={{ color: '#999' }} />
-                  <span>今日登出</span>
-                </Space>
-              }
-              value={statsData?.todayLogout || 0}
-              valueStyle={{ fontSize: 28 }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card hoverable styles={{ body: { padding: '24px 16px' } }}>
-            <Statistic
-              title={
-                <Space>
-                  <AuditOutlined style={{ color: '#1677ff' }} />
-                  <span>历史记录总数</span>
-                </Space>
-              }
-              value={statsData?.totalLogs || 0}
-              valueStyle={{ color: '#1677ff', fontSize: 28 }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card hoverable styles={{ body: { padding: '24px 16px' } }}>
-            <Statistic
-              title={
-                <Space>
-                  <ClockCircleOutlined style={{ color: '#faad14' }} />
-                  <span>最近登录</span>
-                </Space>
-              }
-              value={statsData?.lastLoginAt ? dayjs(statsData.lastLoginAt).format('HH:mm:ss') : '-'}
-              valueStyle={{ color: '#faad14', fontSize: 28 }}
-              suffix={
-                statsData?.lastLoginUser ? (
-                  <Tag color={roleColorMap[statsData.lastLoginUser.role] || 'default'} style={{ marginLeft: 8 }}>
-                    {statsData.lastLoginUser.name}
-                  </Tag>
-                ) : undefined
-              }
-            />
-          </Card>
-        </Col>
+      <Row gutter={[20, 20]}>
+        {statCards.map((card) => {
+          const value = getCardValue(card.key, card);
+          return (
+            <Col xs={24} sm={12} lg={6} key={card.key}>
+              <div
+                style={{
+                  background: card.gradient,
+                  borderRadius: 16,
+                  padding: '24px 20px',
+                  boxShadow: card.shadow,
+                  position: 'relative',
+                  overflow: 'hidden',
+                  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                  cursor: 'default',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-4px)';
+                  e.currentTarget.style.boxShadow = card.shadow.replace('0 8px', '0 12px');
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = card.shadow;
+                }}
+              >
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: -30,
+                    right: -30,
+                    width: 120,
+                    height: 120,
+                    borderRadius: '50%',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                  }}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: -10,
+                    right: 10,
+                    width: 60,
+                    height: 60,
+                    borderRadius: '50%',
+                    background: 'rgba(255, 255, 255, 0.06)',
+                  }}
+                />
+
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: 16,
+                    position: 'relative',
+                    zIndex: 1,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: 15,
+                      fontWeight: 500,
+                      color: 'rgba(255, 255, 255, 0.9)',
+                    }}
+                  >
+                    {card.title}
+                  </span>
+                  <div
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 12,
+                      background: 'rgba(255, 255, 255, 0.2)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 22,
+                      color: '#fff',
+                    }}
+                  >
+                    {card.icon}
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'baseline',
+                    gap: 4,
+                    position: 'relative',
+                    zIndex: 1,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: 34,
+                      fontWeight: 700,
+                      color: '#fff',
+                      lineHeight: 1,
+                    }}
+                  >
+                    {value}
+                  </span>
+                  {card.suffix && (
+                    <span
+                      style={{
+                        fontSize: 15,
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        marginLeft: 2,
+                      }}
+                    >
+                      {card.suffix}
+                    </span>
+                  )}
+                  {card.key === 'todayLogin' && (
+                    <Tag
+                      style={{
+                        marginLeft: 8,
+                        borderRadius: 8,
+                        border: 'none',
+                        background: 'rgba(255, 255, 255, 0.2)',
+                        color: '#fff',
+                        fontSize: 12,
+                        lineHeight: '20px',
+                      }}
+                      icon={<RiseOutlined />}
+                    >
+                      今日
+                    </Tag>
+                  )}
+                </div>
+
+                {card.key === 'lastLoginTime' && statsData?.lastLoginUser && (
+                  <div
+                    style={{
+                      marginTop: 8,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      position: 'relative',
+                      zIndex: 1,
+                    }}
+                  >
+                    <TeamOutlined style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: 13 }} />
+                    <span style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: 13 }}>
+                      用户：{statsData.lastLoginUser.name}
+                    </span>
+                  </div>
+                )}
+
+                {card.key !== 'lastLoginTime' && (
+                  <div
+                    style={{
+                      marginTop: 10,
+                      height: 3,
+                      borderRadius: 2,
+                      background: 'rgba(255, 255, 255, 0.2)',
+                      position: 'relative',
+                      zIndex: 1,
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: '60%',
+                        height: '100%',
+                        borderRadius: 2,
+                        background: 'rgba(255, 255, 255, 0.4)',
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            </Col>
+          );
+        })}
       </Row>
 
       <Card style={{ marginTop: 24 }}>

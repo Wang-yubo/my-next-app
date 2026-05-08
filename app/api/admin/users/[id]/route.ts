@@ -5,12 +5,12 @@ import Role from '@/models/Role';
 import bcrypt from 'bcryptjs';
 
 async function resolveRoleInfoFromDb(roleId: string): Promise<{ name: string; code: string }> {
-  if (!roleId) return { name: '学生', code: 'student' };
+  if (!roleId) return { name: '未知', code: '' };
   try {
     const role = await Role.findById(roleId).lean();
     if (role) return { name: role.name, code: role.code };
   } catch {}
-  return { name: '学生', code: 'student' };
+  return { name: '未知', code: '' };
 }
 
 async function findRoleByCode(code: string): Promise<{ _id: string; name: string; code: string } | null> {
