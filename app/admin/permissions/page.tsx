@@ -67,6 +67,7 @@ const mockMenus: MenuNode[] = [
       { key: 'student:list', title: '学生管理', permission: 'student:list' },
       { key: 'course:list', title: '课程管理', permission: 'course:list' },
       { key: 'enrollment:list', title: '选课管理', permission: 'enrollment:list' },
+      { key: 'note:list', title: '学习笔记', permission: 'note:list' },
     ],
   },
   {

@@ -23,6 +23,7 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   ScheduleOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import Link from 'next/link';
@@ -101,6 +102,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       icon: <ScheduleOutlined />,
       label: '选课管理',
       permission: 'enrollment:list',
+    },
+    {
+      key: '/dashboard/notes',
+      icon: <FileTextOutlined />,
+      label: '学习笔记',
+      permission: 'note:list',
     },
     {
       type: 'divider',

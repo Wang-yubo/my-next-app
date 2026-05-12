@@ -19,7 +19,7 @@ const roles = [
     code: 'edu_admin',
     description: '负责教务相关管理，可管理用户、角色和权限',
     status: 'active',
-    permissions: ['admin:dashboard', 'admin:users', 'admin:permissions', 'admin:monitor'],
+    permissions: [],
     sort: 2,
   },
   {
@@ -33,7 +33,7 @@ const roles = [
   {
     name: '学生',
     code: 'student',
-    description: '学生角色，可查看个人相关数据',
+    description: '学生角色，可查看个人相关数据及学习笔记',
     status: 'active',
     permissions: [],
     sort: 4,
@@ -55,14 +55,15 @@ const seedRoles = async () => {
     const Role = require('../models/Role').default;
 
     let insertedCount = 0;
-    let skippedCount = 0;
+    let updatedCount = 0;
 
     for (const roleData of roles) {
       const existing = await Role.findOne({ code: roleData.code });
 
       if (existing) {
-        console.log(`跳过已存在的角色: ${roleData.name} (${roleData.code})`);
-        skippedCount++;
+        await Role.findOneAndUpdate({ code: roleData.code }, roleData, { returnDocument: 'after' });
+        console.log(`更新角色: ${roleData.name} (${roleData.code})`);
+        updatedCount++;
       } else {
         await Role.create(roleData);
         console.log(`添加角色: ${roleData.name} (${roleData.code})`);
@@ -70,9 +71,9 @@ const seedRoles = async () => {
       }
     }
 
-    console.log('\n========== 角色数据初始化完成 ==========');
+    console.log('\n========== 角色数据同步完成 ==========');
     console.log(`成功插入: ${insertedCount} 条`);
-    console.log(`跳过重复: ${skippedCount} 条`);
+    console.log(`成功更新: ${updatedCount} 条`);
     console.log(`总计处理: ${roles.length} 条`);
 
     process.exit(0);

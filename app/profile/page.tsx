@@ -36,8 +36,10 @@ import {
 } from '@ant-design/icons';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import dayjs from 'dayjs';
 
 const { Title, Paragraph, Text } = Typography;
+const JAVA_API_BASE = process.env.NEXT_PUBLIC_JAVA_API_BASE || 'http://localhost:8080';
 
 interface Student {
   id: string;
@@ -56,12 +58,15 @@ interface Student {
 }
 
 interface Note {
-  _id: string;
+  id: string;
+  studentId: string;
+  studentName: string;
   title: string;
+  topic: string;
   content: string;
-  courseName?: string;
   tags: string[];
-  createdAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface Project {
@@ -120,7 +125,18 @@ export default function ProfilePage() {
       const result = await response.json();
 
       if (result.success) {
-        setData(result.data);
+        const profileData = result.data;
+
+        const notesResponse = await fetch(`${JAVA_API_BASE}/api/notes?page=0&size=3`, {
+          credentials: 'include',
+        });
+        const notesResult = await notesResponse.json();
+        const javaNotes: Note[] = notesResult.code === 200 ? (notesResult.data?.content || []) : [];
+
+        setData({
+          ...profileData,
+          notes: javaNotes,
+        });
       } else {
         message.error('获取个人资料失败');
         router.push('/');
@@ -154,13 +170,9 @@ export default function ProfilePage() {
 
   const { student, notes, projects, reflections, stats } = data;
 
-  // 格式化日期
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('zh-CN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+  // 格式化日期为 YYYY-MM-DD HH:mm
+  const formatDate = (date: string | Date) => {
+    return dayjs(date).format('YYYY-MM-DD HH:mm');
   };
 
   // 心情颜色映射
@@ -431,9 +443,9 @@ export default function ProfilePage() {
                         {formatDate(note.createdAt)}
                       </Text>
                     </div>
-                    {note.courseName && (
-                      <Tag color="blue" style={{ marginBottom: 8 }}>
-                        {note.courseName}
+                    {note.topic && (
+                      <Tag color="purple" style={{ marginBottom: 8 }}>
+                        {note.topic}
                       </Tag>
                     )}
                     <Paragraph
