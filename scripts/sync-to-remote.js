@@ -13,7 +13,7 @@ if (!REMOTE_URI) {
 
 const COLLECTIONS = [
   'students', 'teachers', 'roles', 'adminusers',
-  'courses', 'enrollments', 'activitylogs',
+  'courses', 'enrollments', 'activitylogs', 'notes',
 ];
 
 async function syncData() {
